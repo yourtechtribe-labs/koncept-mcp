@@ -1,0 +1,30 @@
+id: auth-flow
+name: Auth Flow
+type: data-flow
+status: active
+description: How tokens flow from login through cookies and refresh.
+source_of_truth:
+  symbol: AuthProvider
+  file: src/auth/provider.ts
+participants:
+  - file: src/auth/provider.ts
+    role: writer
+    purpose: Issue and rotate tokens.
+  - file: src/auth/middleware.ts
+    role: reader
+    purpose: Validate tokens on each request.
+invariants:
+  - id: tokens-not-in-localstorage
+    description: Access tokens MUST NOT be stored in localStorage.
+    severity: high
+    automated_check: false
+  - id: refresh-cookie-httponly
+    description: Refresh tokens use httpOnly cookies.
+    severity: high
+related_concepts:
+  - csrf-policy
+tags:
+  - auth
+  - security
+created: 2026-05-03
+last_updated: 2026-05-03

@@ -1,7 +1,21 @@
 #!/usr/bin/env node
-// @yourtechtribe-labs/koncept-mcp-server
-// Stdio MCP server exposing koncept tools — populated at T16+
+import { resolve } from 'node:path'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { createServer } from './server.js'
+import { registerAllTools } from './tools/index.js'
 
-import { VERSION } from '@yourtechtribe-labs/koncept-core'
+async function main(): Promise<void> {
+  const rawRoot = process.argv[2] ?? process.cwd()
+  const rootDir = resolve(rawRoot)
 
-console.error(`koncept-mcp-server skeleton (core ${VERSION}) — tools registered at T16+`)
+  const { mcp } = createServer({ rootDir })
+  registerAllTools(mcp, { rootDir })
+
+  const transport = new StdioServerTransport()
+  await mcp.connect(transport)
+}
+
+main().catch((err: unknown) => {
+  process.stderr.write(`koncept-mcp-server fatal: ${String(err)}\n`)
+  process.exit(1)
+})

@@ -1,0 +1,22 @@
+id: csrf-policy
+name: CSRF Policy
+type: architectural-decision
+status: active
+description: Double-submit cookie pattern for CSRF protection.
+source_of_truth:
+  file: src/auth/csrf.ts
+participants:
+  - file: src/auth/csrf.ts
+    role: writer
+    purpose: Generate and validate CSRF tokens.
+invariants:
+  - id: csrf-on-mutations
+    description: All POST/PUT/DELETE require X-CSRF-Token header.
+    severity: high
+related_concepts:
+  - auth-flow
+tags:
+  - security
+  - csrf
+created: 2026-05-03
+last_updated: 2026-05-03
