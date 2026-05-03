@@ -1,0 +1,33 @@
+{
+  "name": "koncepto",
+  "version": "0.0.0",
+  "description": "Semantic concept graph MCP server for codebases — what your code means, not just what it does.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "verify": "pnpm -r build && pnpm -r test && pnpm -r lint",
+    "dogfood": "node packages/koncept-cli/dist/index.js verify"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.19.17",
+    "eslint": "10.3.0",
+    "prettier": "3.8.3",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.1",
+    "vitest": "3.2.4"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourtechtribe-labs/koncept-mcp"
+  }
+}

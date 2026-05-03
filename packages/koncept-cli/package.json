@@ -1,0 +1,34 @@
+{
+  "name": "@yourtechtribe-labs/koncept-cli",
+  "version": "0.1.0-alpha.0",
+  "description": "CLI for koncepto — init, verify, list, link operations on .koncept/ concept graphs.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "koncepto": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "echo 'lint stub'",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@yourtechtribe-labs/koncept-core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourtechtribe-labs/koncept-mcp",
+    "directory": "packages/koncept-cli"
+  }
+}

@@ -1,0 +1,56 @@
+id: concept-schema
+name: Concept schema (YAML + Zod)
+type: architectural-decision
+status: active
+description: |
+  Each concept lives in one YAML file under .koncept/concepts/, validated by a
+  Zod schema at parse time. The Zod schema is the single source of truth for
+  the structure: it generates TypeScript types via z.infer and produces
+  field-level errors at runtime when validation fails.
+
+source_of_truth:
+  symbol: ConceptSchema
+  file: packages/koncept-core/src/schema.ts
+
+participants:
+  - file: packages/koncept-core/src/schema.ts
+    role: writer
+    purpose: Defines Zod ConceptSchema + KEBAB_ID_REGEX + enums
+  - file: packages/koncept-core/src/parser.ts
+    role: reader
+    purpose: Validates parsed YAML against ConceptSchema, returns ParseResult
+  - file: packages/koncept-core/tests/schema.test.ts
+    role: tester
+    purpose: 10 tests covering valid + 7 invalid cases (id regex, enums, missing fields)
+
+invariants:
+  - id: id-must-be-kebab-case
+    description: Concept id must match ^[a-z][a-z0-9-]+$ (no upper, no underscore, starts with letter)
+    severity: high
+  - id: enums-must-be-fixed-set
+    description: type ∈ {behavioral-invariant, architectural-decision, data-flow, ui-pattern, naming-convention}; severity ∈ {high, medium, low}; role ∈ {writer, reader, tester, docs}; status ∈ {active, deprecated, superseded}
+    severity: high
+  - id: required-fields-non-empty
+    description: id, name, type, description, source_of_truth.file, created, last_updated must be present and non-empty strings
+
+    severity: medium
+
+risks_if_broken:
+  - YAML parses but doesn't conform — runtime errors at indexer or MCP server.
+  - Type drift between schema and consumers (parser, search, indexer).
+
+related_concepts:
+  - filesystem-storage
+  - mcp-tool-contract
+
+tags:
+  - koncepto
+  - schema
+  - source-of-truth
+
+created: 2026-05-03
+last_updated: 2026-05-03
+captured_by: claude-code/koncepto-day-1/T15
+references:
+  - personal/koncepto/specs/01-mvp.md
+  - personal/koncepto/specs/01-mvp-DESIGN.md § Module interfaces
