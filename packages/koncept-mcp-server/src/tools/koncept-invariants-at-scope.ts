@@ -1,9 +1,26 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { indexConcepts, parseConceptFile } from '@yourtechtribe-labs/koncept-core'
+import {
+  SeverityEnum,
+  indexConcepts,
+  parseConceptFile,
+} from '@yourtechtribe-labs/koncept-core'
 import type { ToolContext } from './index.js'
+import { KEBAB_ID_REGEX, normalizePath } from './_shared.js'
 
-const KEBAB_ID_REGEX = /^[a-z][a-z0-9-]+$/
+const inputSchema = { scope: z.string().min(1) }
+
+const outputSchema = {
+  invariants: z.array(
+    z.object({
+      concept_id: z.string(),
+      invariant_id: z.string(),
+      description: z.string(),
+      severity: SeverityEnum,
+      source_file: z.string(),
+    }),
+  ),
+}
 
 export function registerKonceptInvariantsAtScope(
   mcp: McpServer,
@@ -12,9 +29,12 @@ export function registerKonceptInvariantsAtScope(
   mcp.registerTool(
     'koncept_invariants_at_scope',
     {
+      title: 'Invariants at scope',
       description:
         'List invariants that apply within a scope. Scope can be a file path or a concept id (kebab-case).',
-      inputSchema: { scope: z.string().min(1) },
+      inputSchema,
+      outputSchema,
+      annotations: { readOnlyHint: true, idempotentHint: true },
     },
     async ({ scope }) => {
       const index = await indexConcepts(ctx.rootDir)
@@ -27,29 +47,20 @@ export function registerKonceptInvariantsAtScope(
             e.participants_paths.some((p) => normalizePath(p) === target),
           )
 
-      const invariants: Array<{
-        concept_id: string
-        invariant_id: string
-        description: string
-        severity: string
-        source_file: string
-      }> = []
-
       const parsedAll = await Promise.all(
         conceptsToInspect.map((e) => parseConceptFile(e.file)),
       )
-      parsedAll.forEach((parsed, i) => {
-        if (!parsed.concept) return
+      const invariants = parsedAll.flatMap((parsed, i) => {
+        if (!parsed.concept) return []
         const concept = parsed.concept
-        for (const inv of concept.invariants) {
-          invariants.push({
-            concept_id: concept.id,
-            invariant_id: inv.id,
-            description: inv.description,
-            severity: inv.severity,
-            source_file: conceptsToInspect[i].file,
-          })
-        }
+        const sourceFile = conceptsToInspect[i].file
+        return concept.invariants.map((inv) => ({
+          concept_id: concept.id,
+          invariant_id: inv.id,
+          description: inv.description,
+          severity: inv.severity,
+          source_file: sourceFile,
+        }))
       })
 
       const payload = { invariants }
@@ -61,6 +72,3 @@ export function registerKonceptInvariantsAtScope(
   )
 }
 
-function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/').replace(/^\.\//, '')
-}

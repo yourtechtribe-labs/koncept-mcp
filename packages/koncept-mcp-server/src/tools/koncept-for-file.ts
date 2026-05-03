@@ -1,15 +1,38 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { indexConcepts, parseConceptFile } from '@yourtechtribe-labs/koncept-core'
+import {
+  ConceptTypeEnum,
+  RoleEnum,
+  indexConcepts,
+  parseConceptFile,
+} from '@yourtechtribe-labs/koncept-core'
 import type { ToolContext } from './index.js'
+import { normalizePath } from './_shared.js'
+
+const inputSchema = { path: z.string().min(1) }
+
+const outputSchema = {
+  matches: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: ConceptTypeEnum,
+      role: RoleEnum,
+      purpose: z.string(),
+    }),
+  ),
+}
 
 export function registerKonceptForFile(mcp: McpServer, ctx: ToolContext): void {
   mcp.registerTool(
     'koncept_for_file',
     {
+      title: 'Concepts for file',
       description:
-        'List concepts that participate in a given file path. Returns matches with id, name, type, role, purpose.',
-      inputSchema: { path: z.string().min(1) },
+        'List concepts that participate in a given file path. Returns each concept with its role and purpose for that file.',
+      inputSchema,
+      outputSchema,
+      annotations: { readOnlyHint: true, idempotentHint: true },
     },
     async ({ path: target }) => {
       const normalized = normalizePath(target)
@@ -43,6 +66,3 @@ export function registerKonceptForFile(mcp: McpServer, ctx: ToolContext): void {
   )
 }
 
-function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/').replace(/^\.\//, '')
-}
