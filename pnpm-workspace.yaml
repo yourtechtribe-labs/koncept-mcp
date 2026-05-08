@@ -3,7 +3,6 @@ packages:
 
 # Security: only allow build scripts from explicitly trusted packages.
 # Default-deny (post npm Sept-2025 supply-chain attack).
-# See knowledge/resources/dev/domain/security/SECURITY-NPM-2025.md
-onlyBuiltDependencies:
-  - esbuild   # vitest dep, well-known + maintained
-
+# pnpm 11 renamed `onlyBuiltDependencies` -> `allowBuilds`. Map: pkg -> bool.
+allowBuilds:
+  esbuild: true # vitest dep, well-known + maintained

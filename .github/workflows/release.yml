@@ -33,14 +33,19 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        # Version comes from `packageManager` in root package.json (pnpm@10.0.0).
-        # Specifying `version:` here would conflict with that.
+        # Version comes from `packageManager` in root package.json.
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+
+      # npm ≥ 11.5.1 is required for OIDC trusted publishing
+      # (https://docs.npmjs.com/trusted-publishers). Node 24 ships npm 11.x
+      # but we belt-and-suspenders to the latest in case the runner image lags.
+      - name: Ensure npm ≥ 11.5.1
+        run: npm i -g npm@latest
 
       - name: Install
         run: pnpm install --frozen-lockfile
