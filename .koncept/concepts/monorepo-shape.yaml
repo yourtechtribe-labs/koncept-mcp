@@ -32,9 +32,9 @@ participants:
   - file: packages/koncept-cli/package.json
     role: writer
     purpose: CLI — depends on koncept-core; entrypoint for init/verify/list/link
-  - file: CLAUDE.md
+  - file: README.md
     role: docs
-    purpose: Documents the anti-pattern guard (no features, no domain layer) for AI agents
+    purpose: Public-facing description of the 3-package shape and quickstart
 
 invariants:
   - id: three-packages-only
@@ -84,5 +84,5 @@ created: 2026-05-08
 last_updated: 2026-05-08
 captured_by: claude-code/koncepto-day-4/dogfood
 references:
-  - CLAUDE.md § Architecture
-  - tracking/DECISIONS.md § Monorepo layout
+  - README.md § Architecture
+  - pnpm-workspace.yaml
