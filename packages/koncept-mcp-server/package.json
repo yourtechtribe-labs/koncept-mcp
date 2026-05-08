@@ -1,6 +1,6 @@
 {
   "name": "@yourtechtribe-labs/koncept-mcp-server",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "mcpName": "io.github.yourtechtribe-labs/koncept-mcp-server",
   "description": "MCP server exposing semantic concept graph tools (koncept_search, koncept_get, koncept_for_file, koncept_invariants_at_scope).",
   "keywords": [
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@yourtechtribe-labs/koncept-core": "workspace:^0.1.0-alpha.5",
+    "@yourtechtribe-labs/koncept-core": "workspace:^0.1.0-alpha.6",
     "zod": "4.4.2"
   },
   "publishConfig": {

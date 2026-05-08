@@ -33,7 +33,7 @@ importers:
   packages/koncept-cli:
     dependencies:
       '@yourtechtribe-labs/koncept-core':
-        specifier: workspace:^0.1.0-alpha.5
+        specifier: workspace:^0.1.0-alpha.6
         version: link:../koncept-core
       glob:
         specifier: 13.0.6
@@ -60,7 +60,7 @@ importers:
         specifier: 1.29.0
         version: 1.29.0(zod@4.4.2)
       '@yourtechtribe-labs/koncept-core':
-        specifier: workspace:^0.1.0-alpha.5
+        specifier: workspace:^0.1.0-alpha.6
         version: link:../koncept-core
       zod:
         specifier: 4.4.2
