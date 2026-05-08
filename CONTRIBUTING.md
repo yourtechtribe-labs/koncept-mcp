@@ -100,6 +100,10 @@ GitHub Issues. Include: koncepto version (`npx koncepto --version` once 0.1.0 sh
 
 **Don't open a public issue.** See [SECURITY.md](./SECURITY.md) for the private vulnerability reporting flow.
 
+## Code of Conduct
+
+Participation is governed by the [Code of Conduct](./CODE_OF_CONDUCT.md) (Contributor Covenant 2.1). Report violations privately to `albert.gil@yourtechtribe.com` with subject prefix `[koncepto coc]`.
+
 ## License
 
 By contributing, you agree your contribution is licensed under MIT (the project license). No CLA, no DCO sign-off required at this stage.

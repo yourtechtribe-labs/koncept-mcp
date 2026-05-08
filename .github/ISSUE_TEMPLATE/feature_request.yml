@@ -1,0 +1,68 @@
+name: Feature request
+description: Propose a new MCP tool, CLI command, schema field, or capability.
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening a feature request, check whether it fits koncepto's shape:
+
+        - koncepto is a **library + CLI + MCP server**, not an app. Features that imply a UI, dev server, or backend service are out of scope.
+        - We stay **dependency-light**. Proposals that need new runtime deps will be scrutinized.
+        - Schema additions need a clear semantics story (what does the new field mean? does it constrain validation?).
+
+        For open-ended ideas or "is this in scope?", prefer [Discussions](https://github.com/yourtechtribe-labs/koncept-mcp/discussions).
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      options:
+        - Concept schema (new field, new kind, new link type)
+        - MCP tool (new tool or change to existing)
+        - CLI command (new command or flag)
+        - Indexer / search behavior
+        - Documentation / DX
+        - Other (explain below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you do today? What workflow is painful or impossible?
+      placeholder: |
+        I want to express that two concepts are mutually exclusive (only one can apply to a file at a time),
+        but the schema only has `refines` and `supersedes` — there's no `excludes` link type.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Concrete shape. YAML example, tool signature, CLI invocation — whatever applies.
+      render: yaml
+      placeholder: |
+        links:
+          - kind: excludes
+            target: other-concept-id
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you tried, or alternative designs you rejected and why.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope check
+      description: Does this fit "library + CLI + MCP server"? Does it require new runtime deps? Any breaking change?
+    validations:
+      required: true

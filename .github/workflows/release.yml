@@ -68,3 +68,27 @@ jobs:
         run: pnpm -r publish --tag alpha --no-git-checks --access public --provenance
         env:
           NPM_CONFIG_PROVENANCE: 'true'
+
+      # MCP registry sync. Runs only on real publishes (tag push or
+      # explicit non-dry workflow_dispatch). Auths via OIDC — no token
+      # needed. Re-syncs server.json to match the tag, then publishes.
+      - name: Install mcp-publisher
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Sync server.json version with package.json
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        working-directory: packages/koncept-mcp-server
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          export V="$VERSION"
+          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('server.json','utf8'));j.version=process.env.V;j.packages[0].version=process.env.V;fs.writeFileSync('server.json',JSON.stringify(j,null,2)+'\n')"
+          cat server.json
+
+      - name: Publish to MCP registry (GitHub OIDC)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        working-directory: packages/koncept-mcp-server
+        run: |
+          ${GITHUB_WORKSPACE}/mcp-publisher login github-oidc
+          ${GITHUB_WORKSPACE}/mcp-publisher publish

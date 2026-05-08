@@ -2,7 +2,7 @@
 
 > Semantic concept graph MCP server for codebases — what your code **means**, not just what it does.
 
-[![Status](https://img.shields.io/badge/status-pre--alpha-orange)]() [![License](https://img.shields.io/badge/license-MIT-blue)]() [![pnpm](https://img.shields.io/badge/pnpm-workspace-yellow)]()
+[![Status](https://img.shields.io/badge/status-pre--alpha-orange)]() [![License](https://img.shields.io/badge/license-MIT-blue)]() [![pnpm](https://img.shields.io/badge/pnpm-workspace-yellow)]() [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/yourtechtribe-labs/koncept-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/yourtechtribe-labs/koncept-mcp)
 
 ## What
 
