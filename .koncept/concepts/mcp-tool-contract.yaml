@@ -3,8 +3,8 @@ name: MCP tool contract surface
 type: architectural-decision
 status: active
 description: |
-  The MCP server exposes exactly four tools — `koncept-search`, `koncept-get`,
-  `koncept-for-file`, `koncept-invariants-at-scope` — registered through a
+  The MCP server exposes exactly four tools — `koncept_search`, `koncept_get`,
+  `koncept_for_file`, `koncept_invariants_at_scope` — registered through a
   single shared registration helper. Every tool takes a Zod-validated input
   schema, dispatches to a pure handler in koncept-core, and returns the result
   as MCP content (text or structured JSON). Tools never write to disk and never
@@ -52,10 +52,14 @@ invariants:
       shell out. The CLI is the only writer; tools are pure readers.
     severity: high
     automated_check: false
-  - id: tool-name-kebab-koncept-prefix
+  - id: tool-name-snake-koncept-prefix
     description: |
-      All tool names match `^koncept-[a-z][a-z0-9-]+$`. The `koncept-` prefix
-      keeps the toolset discoverable via fuzzy match in MCP clients.
+      All tool names match `^koncept_[a-z][a-z0-9_]+$`. Snake_case follows the
+      ecosystem convention (Python MCP SDK, Anthropic-curated server directory),
+      and the `koncept_` prefix keeps the toolset discoverable via fuzzy match
+      in MCP clients. Source filenames under `src/tools/` are kebab-case
+      (`koncept-search.ts`); the registered tool names inside those files are
+      snake_case (`koncept_search`).
     severity: medium
     automated_check: false
   - id: handler-lives-in-core

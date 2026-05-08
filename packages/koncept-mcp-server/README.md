@@ -10,10 +10,10 @@ Reads a project's `.koncept/concepts/*.yaml` registry and exposes 4 read-only to
 
 | Tool | Purpose |
 |---|---|
-| `koncept-search` | Full-text + tag search across concepts |
-| `koncept-get` | Fetch a concept by id (full payload) |
-| `koncept-for-file` | List concepts where a file appears as participant |
-| `koncept-invariants-at-scope` | Return invariants whose concept overlaps a scope |
+| `koncept_search` | Full-text + tag search across concepts |
+| `koncept_get` | Fetch a concept by id (full payload) |
+| `koncept_for_file` | List concepts where a file appears as participant |
+| `koncept_invariants_at_scope` | Return invariants whose concept overlaps a scope |
 
 Drop this in front of Claude Code, Cursor, or any other MCP client and the agent gains read-Step-0 awareness of cross-cutting semantic facts that don't show up in the AST.
 
