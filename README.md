@@ -16,17 +16,15 @@ Code graphs (Aider repomap, GitNexus, Sourcegraph) capture **structural** relati
 
 ## Status
 
-**Pre-alpha** (v0.1 in development). See [spec](https://github.com/yourtechtribe-labs/koncept-mcp) and [roadmap](./ROADMAP.md).
+**Pre-alpha** (`v0.1.0-alpha.3` on npm). Schema and tool surface may break before `0.1.0` final. See [roadmap](./ROADMAP.md).
 
-POC: dogfooded at koncepto itself + Fira Dashboard (PRUAB).
+Dogfooded against this repo itself: 5 concepts in [.koncept/concepts/](./.koncept/concepts/) cover the schema, the registry, the MCP tool contract, the monorepo shape, and the kebab-id naming convention. `pnpm dogfood` = `koncepto verify` against its own registry.
 
 ## Quickstart
 
-> Coming with v0.1.0-alpha.1
-
 ```bash
 # Install in your project
-pnpm add -D @yourtechtribe-labs/koncept-cli
+pnpm add -D @yourtechtribe-labs/koncept-cli@alpha
 
 # Bootstrap
 npx koncepto init
@@ -39,7 +37,7 @@ npx koncepto verify
 
 # Register MCP server (Claude Code)
 claude mcp add --scope user koncepto -- \
-  npx -y @yourtechtribe-labs/koncept-mcp-server@latest "$PWD"
+  npx -y @yourtechtribe-labs/koncept-mcp-server@alpha "$PWD"
 ```
 
 ## Architecture
