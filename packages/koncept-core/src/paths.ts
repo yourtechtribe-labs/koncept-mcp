@@ -9,11 +9,17 @@
 import { resolve, basename as nodeBasename, isAbsolute } from 'node:path'
 
 /**
- * Convert all backslashes to forward slashes.
- * Works on both Windows (`C:\foo\bar` → `C:/foo/bar`) and Unix (no-op).
+ * Convert all backslashes to forward slashes and strip the Windows
+ * extended-length path prefix (`\\?\` → empty).
+ *
+ * Node's `path.resolve` and `glob` may return paths prefixed with `\\?\` on
+ * Windows when the resolved path could exceed MAX_PATH. The prefix is an
+ * implementation detail of Win32 — leaking it through public APIs (MCP tool
+ * outputs, indexed `file` entries) confuses downstream consumers.
  */
 export function normalizeForward(p: string): string {
-  return p.replace(/\\/g, '/')
+  const forward = p.replace(/\\/g, '/')
+  return forward.startsWith('//?/') ? forward.slice(4) : forward
 }
 
 /**

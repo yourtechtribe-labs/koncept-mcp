@@ -2,7 +2,7 @@
 // Greenfield: keep the surface intentional. Internal helpers (regexes,
 // constants, sub-schemas) stay un-exported.
 
-export const VERSION = '0.1.0-alpha.0'
+export { VERSION } from './version.js'
 
 // Schema — top-level types + main schemas. Sub-schemas (Participant, Invariant,
 // SourceOfTruth) and the kebab-id regex stay internal.

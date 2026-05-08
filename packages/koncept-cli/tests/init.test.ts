@@ -36,6 +36,19 @@ describe('koncepto init', () => {
     const readme = await readFile(join(tmp, '.koncept/README.md'), 'utf-8')
     expect(readme.length).toBeGreaterThan(50)
     expect(readme).toMatch(/koncept/i)
+    expect(readme).toMatch(/source_of_truth/)
+    expect(readme).toMatch(/participants/)
+    expect(readme).toMatch(/related_concepts/)
+  })
+
+  it('writes EXAMPLE.yaml outside concepts/ so it is not indexed', async () => {
+    await runInit({ rootDir: tmp, positional: [], flags: {} })
+    const example = await readFile(join(tmp, '.koncept/EXAMPLE.yaml'), 'utf-8')
+    expect(example).toMatch(/^id: /m)
+    expect(example).toMatch(/type: behavioral-invariant/)
+    expect(example).toMatch(/source_of_truth:/)
+    // Must NOT live under concepts/ (would otherwise be indexed)
+    expect(await exists(join(tmp, '.koncept/concepts/EXAMPLE.yaml'))).toBe(false)
   })
 
   it('is idempotent — re-running does not fail or overwrite hand-edited README', async () => {

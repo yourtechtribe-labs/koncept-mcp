@@ -6,8 +6,7 @@ import { runInit } from './commands/init.js'
 import { runVerify } from './commands/verify.js'
 import { runList } from './commands/list.js'
 import { runLink } from './commands/link.js'
-
-const VERSION = '0.1.0-alpha.0'
+import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
 

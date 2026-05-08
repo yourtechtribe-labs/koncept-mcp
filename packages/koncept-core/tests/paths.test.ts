@@ -13,6 +13,14 @@ describe('normalizeForward', () => {
   it('handles mixed separators', () => {
     expect(normalizeForward('foo\\bar/baz')).toBe('foo/bar/baz')
   })
+
+  it('strips Windows extended-length UNC prefix (\\\\?\\)', () => {
+    expect(normalizeForward('\\\\?\\C:\\Users\\x\\file.yaml')).toBe('C:/Users/x/file.yaml')
+  })
+
+  it('strips //?/ form (already-forward UNC prefix)', () => {
+    expect(normalizeForward('//?/C:/Users/x/file.yaml')).toBe('C:/Users/x/file.yaml')
+  })
 })
 
 describe('resolveRelative', () => {
