@@ -1,0 +1,52 @@
+# @yourtechtribe-labs/koncept-mcp-server
+
+> MCP stdio server exposing [koncepto](https://github.com/yourtechtribe-labs/koncept-mcp) — semantic concept graph tools for AI coding agents.
+
+**Status**: pre-alpha (`v0.1.0-alpha.1`).
+
+## What it does
+
+Reads a project's `.koncept/concepts/*.yaml` registry and exposes 4 read-only tools over the [Model Context Protocol](https://modelcontextprotocol.io):
+
+| Tool | Purpose |
+|---|---|
+| `koncept-search` | Full-text + tag search across concepts |
+| `koncept-get` | Fetch a concept by id (full payload) |
+| `koncept-for-file` | List concepts where a file appears as participant |
+| `koncept-invariants-at-scope` | Return invariants whose concept overlaps a scope |
+
+Drop this in front of Claude Code, Cursor, or any other MCP client and the agent gains read-Step-0 awareness of cross-cutting semantic facts that don't show up in the AST.
+
+## Install (Claude Code)
+
+```bash
+claude mcp add --scope user koncepto -- \
+  npx -y @yourtechtribe-labs/koncept-mcp-server@alpha "$PWD"
+```
+
+## Install (other MCP clients)
+
+The server expects a single positional arg: the project root containing a `.koncept/` directory.
+
+```bash
+npx -y @yourtechtribe-labs/koncept-mcp-server@alpha /path/to/project
+```
+
+## Bootstrap your project
+
+Use the CLI ([`@yourtechtribe-labs/koncept-cli`](https://www.npmjs.com/package/@yourtechtribe-labs/koncept-cli)) to initialize the registry:
+
+```bash
+pnpm add -D @yourtechtribe-labs/koncept-cli@alpha
+npx koncepto init
+```
+
+Then write concepts under `.koncept/concepts/<id>.yaml` and `npx koncepto verify`.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
+
+## Repository
+
+Source, issues, schema docs, and roadmap at [github.com/yourtechtribe-labs/koncept-mcp](https://github.com/yourtechtribe-labs/koncept-mcp).

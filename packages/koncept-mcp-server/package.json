@@ -1,6 +1,6 @@
 {
   "name": "@yourtechtribe-labs/koncept-mcp-server",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "MCP server exposing semantic concept graph tools (koncept_get, koncept_for_file, koncept_search, koncept_invariants_at_scope).",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,11 +21,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@yourtechtribe-labs/koncept-core": "workspace:*",
+    "@yourtechtribe-labs/koncept-core": "workspace:^0.1.0-alpha.1",
     "zod": "4.4.2"
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public",
+    "tag": "alpha"
   },
   "license": "MIT",
   "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp",
