@@ -1,10 +1,26 @@
 {
   "name": "@yourtechtribe-labs/koncept-mcp-server",
-  "version": "0.1.0-alpha.1",
-  "description": "MCP server exposing semantic concept graph tools (koncept_get, koncept_for_file, koncept_search, koncept_invariants_at_scope).",
+  "version": "0.1.0-alpha.2",
+  "description": "MCP server exposing semantic concept graph tools (koncept_search, koncept_get, koncept_for_file, koncept_invariants_at_scope).",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "modelcontextprotocol",
+    "claude",
+    "claude-code",
+    "ai-tools",
+    "concept-graph",
+    "knowledge-graph",
+    "yaml"
+  ],
   "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
     "koncept-mcp": "./dist/index.js"
   },
@@ -12,6 +28,9 @@
     "dist",
     "README.md"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -21,7 +40,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@yourtechtribe-labs/koncept-core": "workspace:^0.1.0-alpha.1",
+    "@yourtechtribe-labs/koncept-core": "workspace:^0.1.0-alpha.2",
     "zod": "4.4.2"
   },
   "publishConfig": {
@@ -29,7 +48,10 @@
     "tag": "alpha"
   },
   "license": "MIT",
-  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp",
+  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/yourtechtribe-labs/koncept-mcp/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/yourtechtribe-labs/koncept-mcp",

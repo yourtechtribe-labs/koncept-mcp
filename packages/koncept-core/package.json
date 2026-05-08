@@ -1,9 +1,17 @@
 {
   "name": "@yourtechtribe-labs/koncept-core",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Core schema, parser, and indexer for koncepto semantic concept graphs.",
+  "keywords": [
+    "yaml",
+    "concept-graph",
+    "knowledge-graph",
+    "schema",
+    "validation",
+    "zod",
+    "indexer"
+  ],
   "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -15,6 +23,9 @@
     "dist",
     "README.md"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -31,7 +42,10 @@
     "tag": "alpha"
   },
   "license": "MIT",
-  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp",
+  "homepage": "https://github.com/yourtechtribe-labs/koncept-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/yourtechtribe-labs/koncept-mcp/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/yourtechtribe-labs/koncept-mcp",
