@@ -1,0 +1,75 @@
+id: filesystem-storage
+name: Filesystem-backed concept registry
+type: architectural-decision
+status: active
+description: |
+  Concepts persist as one YAML file per concept under `.koncept/concepts/<id>.yaml`.
+  The registry is git-tracked so the concept graph travels with the repo. The
+  derived index (`.koncept/index.json`) is a denormalized cache produced by
+  `koncepto verify`; it is not source-of-truth and is regenerable from the YAML
+  files at any time. This decision keeps the registry diffable, mergeable, and
+  reviewable in PRs without a database, and lets agents read concepts without
+  starting the MCP server.
+
+source_of_truth:
+  symbol: indexConcepts
+  file: packages/koncept-core/src/indexer.ts
+
+participants:
+  - file: packages/koncept-core/src/indexer.ts
+    role: writer
+    purpose: Globs `.koncept/concepts/*.yaml`, parses, validates cross-refs, writes index.json
+  - file: packages/koncept-core/src/parser.ts
+    role: reader
+    purpose: Reads each YAML file from disk, returns ParseResult
+  - file: packages/koncept-cli/src/commands/init.ts
+    role: writer
+    purpose: Creates `.koncept/concepts/`, `.koncept/index.json`, and `.koncept/README.md` on bootstrap
+  - file: packages/koncept-core/tests/indexer.test.ts
+    role: tester
+    purpose: Verifies glob, parse aggregation, duplicate detection, missing-file detection
+  - file: .gitignore
+    role: writer
+    purpose: Excludes `.koncept/index.json` (regenerable cache) from VCS
+
+invariants:
+  - id: index-is-cache-not-source
+    description: |
+      `.koncept/index.json` is regenerable from `.koncept/concepts/*.yaml`. It must
+      never be the only place a concept lives; deleting it must never lose data.
+    severity: high
+    automated_check: false
+  - id: one-concept-per-file
+    description: |
+      Each YAML file under `.koncept/concepts/` declares exactly one top-level
+      concept. No arrays, no aggregating files. Filename SHOULD match the concept id.
+    severity: medium
+    automated_check: false
+  - id: kebab-yaml-glob
+    description: |
+      The indexer only picks up files matching `.koncept/concepts/*.yaml`. Files
+      under nested subfolders or with `.yml` extension are ignored.
+    severity: low
+    automated_check: false
+
+risks_if_broken:
+  - Editing `index.json` directly causes silent drift on next `verify` (overwritten).
+  - Aggregating multiple concepts in one YAML breaks cross-ref resolution and per-file diffs.
+  - Storing the registry outside the repo loses portability for AI agents and CI.
+
+related_concepts:
+  - concept-schema
+  - mcp-tool-contract
+
+tags:
+  - koncepto
+  - storage
+  - architecture
+  - cache
+
+created: 2026-05-08
+last_updated: 2026-05-08
+captured_by: claude-code/koncepto-day-4/dogfood
+references:
+  - .koncept/README.md
+  - packages/koncept-cli/src/commands/init.ts § README_TEMPLATE

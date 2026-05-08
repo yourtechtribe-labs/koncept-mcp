@@ -1,0 +1,70 @@
+id: kebab-id-everywhere
+name: Kebab-case identifiers across the registry
+type: naming-convention
+status: active
+description: |
+  Every identifier visible in the concept registry — concept ids, invariant ids,
+  and entries in `related_concepts` — must match `^[a-z][a-z0-9-]+$`. Lowercase,
+  ASCII letters and digits, hyphens as separators, must start with a letter, and
+  at least two characters total. This single regex (`KEBAB_ID_REGEX` in the
+  schema) is reused by both the runtime validator and the spec; agents writing
+  new concepts MUST conform without exception.
+
+source_of_truth:
+  symbol: KEBAB_ID_REGEX
+  file: packages/koncept-core/src/schema.ts
+
+participants:
+  - file: packages/koncept-core/src/schema.ts
+    role: writer
+    purpose: Defines the regex and applies it to id / invariants[].id / related_concepts[]
+  - file: packages/koncept-core/src/parser.ts
+    role: reader
+    purpose: Surfaces Zod's per-field validation error when a YAML file violates the regex
+  - file: packages/koncept-core/tests/schema.test.ts
+    role: tester
+    purpose: Covers valid kebab-case, plus rejection of underscore, uppercase, leading digit, leading hyphen
+  - file: .koncept/concepts/concept-schema.yaml
+    role: docs
+    purpose: Concrete example of compliant ids (id, invariant ids, related_concepts)
+
+invariants:
+  - id: regex-is-the-contract
+    description: |
+      The regex `^[a-z][a-z0-9-]+$` is the only validator. No alternative or
+      relaxed form is allowed (no underscores, no uppercase, no Unicode letters).
+    severity: high
+    automated_check: true
+  - id: filename-matches-concept-id
+    description: |
+      The filename of a concept YAML SHOULD equal `<id>.yaml`. The indexer does
+      not enforce this, but mismatches make grep/git-blame harder.
+    severity: low
+    automated_check: false
+  - id: invariant-ids-unique-within-concept
+    description: |
+      Within a single concept, `invariants[].id` values must be unique. Across
+      different concepts, invariant ids may repeat (they are scoped to the
+      concept).
+    severity: medium
+    automated_check: false
+
+risks_if_broken:
+  - Snake_case or PascalCase ids parse-error at load time; the concept never enters the index.
+  - Mismatched filename ↔ concept id breaks `koncepto get <id>` discoverability via the filesystem.
+  - Duplicated invariant ids within a concept make automated checks ambiguous.
+
+related_concepts:
+  - concept-schema
+
+tags:
+  - koncepto
+  - naming
+  - schema
+  - validation
+
+created: 2026-05-08
+last_updated: 2026-05-08
+captured_by: claude-code/koncepto-day-4/dogfood
+references:
+  - packages/koncept-core/src/schema.ts § KEBAB_ID_REGEX

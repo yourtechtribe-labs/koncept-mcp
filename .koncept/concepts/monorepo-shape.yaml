@@ -1,0 +1,88 @@
+id: monorepo-shape
+name: Monorepo shape (3 packages, no vertical slice)
+type: architectural-decision
+status: active
+description: |
+  koncepto is a pnpm workspace with exactly three packages — `koncept-core`,
+  `koncept-mcp-server`, `koncept-cli` — published independently to npm under
+  the `@yourtechtribe-labs` scope. It is a library + protocol server + CLI,
+  not an application. The `src/features/<feature>/handler.ts` vertical-slice
+  pattern (which fits app-style projects) is explicitly rejected here: there
+  are no features, no routes, no shared `domain/` layer. Each package's
+  internal layout is by module (schema, parser, indexer, search) rather than
+  by feature.
+
+source_of_truth:
+  symbol: packages
+  file: pnpm-workspace.yaml
+
+participants:
+  - file: pnpm-workspace.yaml
+    role: writer
+    purpose: Declares the workspace package globs
+  - file: package.json
+    role: writer
+    purpose: Root package — orchestrates `pnpm -r build|test|lint|verify`, declares dogfood script
+  - file: packages/koncept-core/package.json
+    role: writer
+    purpose: Core library — Zod schema, parser, indexer, search
+  - file: packages/koncept-mcp-server/package.json
+    role: writer
+    purpose: MCP stdio server — depends on koncept-core
+  - file: packages/koncept-cli/package.json
+    role: writer
+    purpose: CLI — depends on koncept-core; entrypoint for init/verify/list/link
+  - file: CLAUDE.md
+    role: docs
+    purpose: Documents the anti-pattern guard (no features, no domain layer) for AI agents
+
+invariants:
+  - id: three-packages-only
+    description: |
+      The workspace contains exactly the three packages above. New top-level
+      packages require an ADR; do not add `koncept-<x>` opportunistically.
+    severity: medium
+    automated_check: false
+  - id: no-vertical-slice
+    description: |
+      Do NOT introduce `src/features/<feature>/` inside any package. The codebase
+      is a library, not an app. Files are organized by capability (schema,
+      parser, indexer) not by feature.
+    severity: high
+    automated_check: false
+  - id: no-shared-domain-layer
+    description: |
+      Do NOT introduce `src/domain/{entities,value-objects,errors}/` shared
+      across packages. Cross-package facts are expressed as concepts in this
+      registry, not as code abstractions.
+    severity: high
+    automated_check: false
+  - id: core-has-no-runtime-deps-on-server
+    description: |
+      `koncept-core` depends on neither `koncept-mcp-server` nor `koncept-cli`.
+      The dependency arrows point from server/cli into core, never the reverse.
+    severity: high
+    automated_check: false
+
+risks_if_broken:
+  - Vertical-slice refactor would invalidate every concept's participant paths and break dogfooding.
+  - Cyclic deps (server → core → cli) prevent independent npm publishing of core.
+  - A shared `domain/` layer duplicates what concepts already express, and ages worse than YAML.
+
+related_concepts:
+  - concept-schema
+  - filesystem-storage
+  - mcp-tool-contract
+
+tags:
+  - koncepto
+  - architecture
+  - monorepo
+  - anti-pattern
+
+created: 2026-05-08
+last_updated: 2026-05-08
+captured_by: claude-code/koncepto-day-4/dogfood
+references:
+  - CLAUDE.md § Architecture
+  - tracking/DECISIONS.md § Monorepo layout

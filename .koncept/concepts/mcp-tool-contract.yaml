@@ -1,0 +1,91 @@
+id: mcp-tool-contract
+name: MCP tool contract surface
+type: architectural-decision
+status: active
+description: |
+  The MCP server exposes exactly four tools — `koncept-search`, `koncept-get`,
+  `koncept-for-file`, `koncept-invariants-at-scope` — registered through a
+  single shared registration helper. Every tool takes a Zod-validated input
+  schema, dispatches to a pure handler in koncept-core, and returns the result
+  as MCP content (text or structured JSON). Tools never write to disk and never
+  hold state across calls; the in-memory index is built once per server start
+  by reading the YAML registry.
+
+source_of_truth:
+  symbol: registerTools
+  file: packages/koncept-mcp-server/src/tools/index.ts
+
+participants:
+  - file: packages/koncept-mcp-server/src/tools/index.ts
+    role: writer
+    purpose: Registers the four tools against the MCP server instance
+  - file: packages/koncept-mcp-server/src/tools/_shared.ts
+    role: writer
+    purpose: Shared helpers (Zod input schemas, content formatting, error mapping)
+  - file: packages/koncept-mcp-server/src/tools/koncept-search.ts
+    role: writer
+    purpose: Tool — full-text + tag search across concepts
+  - file: packages/koncept-mcp-server/src/tools/koncept-get.ts
+    role: writer
+    purpose: Tool — fetch a concept by id (full payload)
+  - file: packages/koncept-mcp-server/src/tools/koncept-for-file.ts
+    role: writer
+    purpose: Tool — list concepts where a given file appears as participant
+  - file: packages/koncept-mcp-server/src/tools/koncept-invariants-at-scope.ts
+    role: writer
+    purpose: Tool — return all invariants whose concept's source_of_truth or participants overlap a scope
+  - file: packages/koncept-mcp-server/tests/tools.test.ts
+    role: tester
+    purpose: Integration tests against the registered tool surface
+
+invariants:
+  - id: tools-take-validated-input
+    description: |
+      Every tool defines a Zod input schema and rejects malformed payloads with
+      a typed error before dispatching to a handler. No `as any`, no untyped
+      `request.params.arguments`.
+    severity: high
+    automated_check: false
+  - id: tools-are-readonly
+    description: |
+      MCP tools never write to `.koncept/`, never mutate the index, never
+      shell out. The CLI is the only writer; tools are pure readers.
+    severity: high
+    automated_check: false
+  - id: tool-name-kebab-koncept-prefix
+    description: |
+      All tool names match `^koncept-[a-z][a-z0-9-]+$`. The `koncept-` prefix
+      keeps the toolset discoverable via fuzzy match in MCP clients.
+    severity: medium
+    automated_check: false
+  - id: handler-lives-in-core
+    description: |
+      Each tool's business logic lives in `@yourtechtribe-labs/koncept-core`
+      (search.ts, indexer.ts). The mcp-server tool file is a thin adapter:
+      validate input → call core → format output.
+    severity: medium
+    automated_check: false
+
+risks_if_broken:
+  - Untyped tool input → runtime errors leak as opaque MCP errors with no field info.
+  - A tool that writes breaks the read-only assumption clients (Claude Code, Cursor) make about MCP servers.
+  - Business logic in tool files fragments search/indexing across packages, blocking reuse from CLI.
+  - Diverging tool naming makes the surface harder to fuzzy-match and document.
+
+related_concepts:
+  - concept-schema
+  - filesystem-storage
+
+tags:
+  - koncepto
+  - mcp
+  - tools
+  - contract
+  - read-only
+
+created: 2026-05-08
+last_updated: 2026-05-08
+captured_by: claude-code/koncepto-day-4/dogfood
+references:
+  - packages/koncept-mcp-server/src/server.ts
+  - PAT-026 (commit ecdf274 — tool registration surface)
