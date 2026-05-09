@@ -2,7 +2,7 @@
 
 > Core schema, parser, and indexer for [koncepto](https://github.com/yourtechtribe-labs/koncept-mcp) — semantic concept graphs for codebases.
 
-**Status**: pre-alpha (`v0.1.0-alpha.1`).
+**Status**: pre-alpha (`v0.2.0-alpha.0`).
 
 ## What this package contains
 

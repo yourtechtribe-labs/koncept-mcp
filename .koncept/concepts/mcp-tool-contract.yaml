@@ -45,13 +45,11 @@ invariants:
       a typed error before dispatching to a handler. No `as any`, no untyped
       `request.params.arguments`.
     severity: high
-    automated_check: false
   - id: tools-are-readonly
     description: |
       MCP tools never write to `.koncept/`, never mutate the index, never
       shell out. The CLI is the only writer; tools are pure readers.
     severity: high
-    automated_check: false
   - id: tool-name-snake-koncept-prefix
     description: |
       All tool names match `^koncept_[a-z][a-z0-9_]+$`. Snake_case follows the
@@ -61,14 +59,12 @@ invariants:
       (`koncept-search.ts`); the registered tool names inside those files are
       snake_case (`koncept_search`).
     severity: medium
-    automated_check: false
   - id: handler-lives-in-core
     description: |
       Each tool's business logic lives in `@yourtechtribe-labs/koncept-core`
       (search.ts, indexer.ts). The mcp-server tool file is a thin adapter:
       validate input → call core → format output.
     severity: medium
-    automated_check: false
 
 risks_if_broken:
   - Untyped tool input → runtime errors leak as opaque MCP errors with no field info.

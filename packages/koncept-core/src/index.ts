@@ -13,6 +13,9 @@ export {
   ConceptTypeEnum,
   SeverityEnum,
   StatusEnum,
+  AutomatedCheckSchema,
+  LinkTypeEnum,
+  LinkRefSchema,
 } from './schema.js'
 export type {
   Concept,
@@ -24,6 +27,9 @@ export type {
   ConceptType,
   Severity,
   Status,
+  AutomatedCheck,
+  LinkType,
+  LinkRef,
 } from './schema.js'
 
 // Parser
@@ -43,3 +49,17 @@ export type {
 // Search
 export { searchEntries } from './search.js'
 export type { SearchHit, MatchField } from './search.js'
+
+// Affected (impact analysis)
+export { computeAffected, loadConcepts, resolveRelatedIds } from './affected.js'
+export type {
+  AffectedReport,
+  AffectedConcept,
+  AffectedInvariant,
+  MatchedRole,
+  LoadConceptsResult,
+} from './affected.js'
+
+// Auto-link inference
+export { suggestLinks } from './suggest-links.js'
+export type { LinkSuggestion, SuggestLinksOptions } from './suggest-links.js'

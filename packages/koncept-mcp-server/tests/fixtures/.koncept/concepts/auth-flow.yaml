@@ -17,7 +17,6 @@ invariants:
   - id: tokens-not-in-localstorage
     description: Access tokens MUST NOT be stored in localStorage.
     severity: high
-    automated_check: false
   - id: refresh-cookie-httponly
     description: Refresh tokens use httpOnly cookies.
     severity: high

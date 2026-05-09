@@ -5,6 +5,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { createServer } from '../src/server.js'
 import { registerAllTools } from '../src/tools/index.js'
+import { registerAllResources } from '../src/resources/index.js'
 
 const FIXTURE_ROOT = resolve(
   fileURLToPath(new URL('./fixtures/', import.meta.url)),
@@ -26,6 +27,7 @@ describe('koncept-mcp-server stdio tools', () => {
   beforeAll(async () => {
     const { mcp } = createServer({ rootDir: FIXTURE_ROOT })
     registerAllTools(mcp, { rootDir: FIXTURE_ROOT })
+    registerAllResources(mcp, { rootDir: FIXTURE_ROOT })
 
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
     client = new Client({ name: 'koncept-test-client', version: '0.0.0' })
@@ -115,5 +117,79 @@ describe('koncept-mcp-server stdio tools', () => {
     })) as { invariants: Array<{ invariant_id: string }> }
     expect(out.invariants).toHaveLength(1)
     expect(out.invariants[0]?.invariant_id).toBe('csrf-on-mutations')
+  })
+
+  it('koncept_affected reports concepts touched by a file', async () => {
+    const out = (await call(client, 'koncept_affected', {
+      files: ['src/auth/provider.ts'],
+    })) as {
+      concepts: Array<{ id: string; max_severity: string | null }>
+      unmatched_files: string[]
+    }
+    expect(out.concepts.map((c) => c.id)).toEqual(['auth-flow'])
+    expect(out.concepts[0].max_severity).toBe('high')
+    expect(out.unmatched_files).toEqual([])
+  })
+
+  it('koncept_affected lists unmatched files separately', async () => {
+    const out = (await call(client, 'koncept_affected', {
+      files: ['src/auth/provider.ts', 'README.md'],
+    })) as {
+      concepts: Array<{ id: string }>
+      unmatched_files: string[]
+    }
+    expect(out.concepts).toHaveLength(1)
+    expect(out.unmatched_files).toEqual(['README.md'])
+  })
+
+  it('lists resources including the static index and per-concept entries', async () => {
+    const res = (await client.listResources()) as {
+      resources: Array<{ uri: string; name: string }>
+    }
+    const uris = res.resources.map((r) => r.uri).sort()
+    expect(uris).toContain('koncept://concepts')
+    expect(uris).toContain('koncept://concept/auth-flow')
+    expect(uris).toContain('koncept://concept/csrf-policy')
+  })
+
+  it('reads the static koncept://concepts index as JSON', async () => {
+    const res = (await client.readResource({ uri: 'koncept://concepts' })) as {
+      contents: Array<{ uri: string; mimeType?: string; text?: string }>
+    }
+    expect(res.contents[0].mimeType).toBe('application/json')
+    const payload = JSON.parse(res.contents[0].text ?? '[]') as Array<{
+      id: string
+      uri: string
+    }>
+    expect(payload.map((p) => p.id).sort()).toEqual(['auth-flow', 'csrf-policy'])
+    expect(payload[0].uri).toMatch(/^koncept:\/\/concept\//)
+  })
+
+  it('reads a single concept by uri template', async () => {
+    const res = (await client.readResource({
+      uri: 'koncept://concept/auth-flow',
+    })) as { contents: Array<{ text?: string }> }
+    const concept = JSON.parse(res.contents[0].text ?? '{}') as {
+      id: string
+      invariants: unknown[]
+    }
+    expect(concept.id).toBe('auth-flow')
+    expect(concept.invariants.length).toBe(2)
+  })
+
+  it('returns a not_found payload for an unknown concept uri', async () => {
+    const res = (await client.readResource({
+      uri: 'koncept://concept/does-not-exist',
+    })) as { contents: Array<{ text?: string }> }
+    const body = JSON.parse(res.contents[0].text ?? '{}') as { error?: string }
+    expect(body.error).toBe('not_found')
+  })
+
+  it('returns invalid_id for a malformed concept uri', async () => {
+    const res = (await client.readResource({
+      uri: 'koncept://concept/BadId',
+    })) as { contents: Array<{ text?: string }> }
+    const body = JSON.parse(res.contents[0].text ?? '{}') as { error?: string }
+    expect(body.error).toBe('invalid_id')
   })
 })

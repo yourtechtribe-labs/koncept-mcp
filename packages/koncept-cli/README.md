@@ -1,8 +1,8 @@
 # @yourtechtribe-labs/koncept-cli
 
-> CLI for [koncepto](https://github.com/yourtechtribe-labs/koncept-mcp) — initialize, verify, list, and link operations on `.koncept/` semantic concept graphs.
+> CLI for [koncepto](https://github.com/yourtechtribe-labs/koncept-mcp) — initialize, verify (with auto-link suggestions), list, link, and impact analysis (`affected`) on `.koncept/` semantic concept graphs.
 
-**Status**: pre-alpha (`v0.1.0-alpha.1`).
+**Status**: pre-alpha (`v0.2.0-alpha.0`).
 
 ## Install
 
@@ -28,10 +28,11 @@ npx koncepto init
 
 ### `koncepto verify`
 
-Validates every concept YAML against the schema, checks cross-references, and writes the index. Exits non-zero on any issue (parse error, duplicate id, unresolved related concept, missing participant file).
+Validates every concept YAML against the schema, checks cross-references, and writes the index. Exits non-zero on any issue (parse error, duplicate id, unresolved related concept, missing participant file). On a clean run, also surfaces auto-link suggestions (pairs of concepts that share participants or tags but are not linked via `related_concepts`) — non-blocking; pass `--no-suggestions` to silence.
 
 ```bash
 npx koncepto verify
+npx koncepto verify --no-suggestions
 ```
 
 ### `koncepto list`
@@ -51,6 +52,16 @@ npx koncepto link concept-schema src/lib/foo.ts --role=reader --purpose="parses 
 ```
 
 Roles: `writer`, `reader`, `tester`, `docs`.
+
+### `koncepto affected [--from <ref>] [--files=a,b,c] [--json]`
+
+Reports which concepts and invariants are touched by a set of changed files. Defaults to `git diff --name-only HEAD`; pass `--from HEAD~3` for a wider range or `--files=path1,path2` to bypass git entirely. Output is grouped by concept, ordered by max severity. Exits `1` when any touched invariant has severity `high` (useful as a pre-commit gate), `0` otherwise, `2` on operational failure.
+
+```bash
+npx koncepto affected
+npx koncepto affected --from HEAD~5 --json
+npx koncepto affected --files=src/auth.ts,src/db.ts
+```
 
 ## Companion package
 

@@ -6,6 +6,7 @@ import { runInit } from './commands/init.js'
 import { runVerify } from './commands/verify.js'
 import { runList } from './commands/list.js'
 import { runLink } from './commands/link.js'
+import { runAffected } from './commands/affected.js'
 import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
@@ -13,10 +14,13 @@ const HELP = `koncepto ${VERSION}
 Usage:
   koncepto init                       Bootstrap .koncept/ in cwd
   koncepto verify                     Validate concepts and write index.json
+       [--no-suggestions]                  (suppress auto-link suggestions)
   koncepto list [--type] [--tag]      List concepts (with optional filters)
        [--status]
   koncepto link <id> <file>           Add a participant to an existing concept
        --role=<r> --purpose=<p>
+  koncepto affected [--from <ref>]    Report concepts/invariants touched by a diff
+       [--files=a,b,c] [--json]
 
 Flags:
   --help, --version
@@ -35,6 +39,7 @@ const COMMANDS: Record<string, Handler> = {
   verify: runVerify,
   list: runList,
   link: runLink,
+  affected: runAffected,
 }
 
 export async function run(argv: string[], cwd: string = process.cwd()): Promise<number> {

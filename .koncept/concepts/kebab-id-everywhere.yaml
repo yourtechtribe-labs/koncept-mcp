@@ -34,20 +34,23 @@ invariants:
       The regex `^[a-z][a-z0-9-]+$` is the only validator. No alternative or
       relaxed form is allowed (no underscores, no uppercase, no Unicode letters).
     severity: high
-    automated_check: true
+    check:
+      kind: grep
+      pattern: 'KEBAB_ID_REGEX = /\^\[a-z\]\[a-z0-9-\]\+\$/'
+      in:
+        - packages/koncept-core/src/schema.ts
+      should_match: true
   - id: filename-matches-concept-id
     description: |
       The filename of a concept YAML SHOULD equal `<id>.yaml`. The indexer does
       not enforce this, but mismatches make grep/git-blame harder.
     severity: low
-    automated_check: false
   - id: invariant-ids-unique-within-concept
     description: |
       Within a single concept, `invariants[].id` values must be unique. Across
       different concepts, invariant ids may repeat (they are scoped to the
       concept).
     severity: medium
-    automated_check: false
 
 risks_if_broken:
   - Snake_case or PascalCase ids parse-error at load time; the concept never enters the index.
@@ -55,7 +58,7 @@ risks_if_broken:
   - Duplicated invariant ids within a concept make automated checks ambiguous.
 
 related_concepts:
-  - concept-schema
+  - { id: concept-schema, type: refines }
 
 tags:
   - koncepto

@@ -15,7 +15,8 @@ Latest: **`v0.1.0-alpha.3`** ([npm](https://www.npmjs.com/package/@yourtechtribe
 - [x] Public release on npm under `@yourtechtribe-labs/*`
 - [x] OIDC trusted publishing with sigstore provenance attestations
 - [ ] Real-world feedback from at least one external project consuming the MCP server
-- [ ] Schema refinements driven by feedback (likely: invariant `automated_check` payload, scope as glob/AST query, link types)
+- [x] Schema refinements: structured `invariant.check` payload (`{kind: none | grep | command, ...}`) and typed `related_concepts` (`string | {id, type}` union with `extends | refines | conflicts-with | superseded-by | requires | related`). Breaking on `check`; `related_concepts` is non-breaking (string form still accepted).
+- [ ] Scope expressions — richer `scopes` (line ranges, AST node selectors, regex over file content) instead of only file paths
 
 ## v0.1.0 — first stable
 
@@ -31,16 +32,18 @@ Schema freeze. Major-version bumps after this require a deprecation cycle.
 
 Direction, not commitment. Subject to dogfood and user feedback.
 
-- [ ] **Auto-link inference** — derive `related_concepts` candidates from shared participants + tag overlap, surfaced as suggestions in `koncepto verify`
+- [x] **Auto-link inference** — `koncepto verify` surfaces candidate `related_concepts` from shared participants + tag overlap. Non-blocking suggestions; `--no-suggestions` to silence.
+- [x] **Impact analysis (`koncepto affected`)** — CLI command + MCP tool `koncept_affected`. Given a list of changed files (or `git diff --name-only` by default), reports concepts/invariants touched, ordered by max severity. Exit 1 on `high` invariants.
+- [x] **MCP resources** — `koncept://concepts` (index) and `koncept://concept/{id}` (single concept) as readable resources alongside the 5 tools. Read-on-demand; no subscriptions yet.
 - [ ] **Concept discovery in CI** — GitHub Action that runs `koncepto verify` on every PR and comments on broken cross-refs
-- [ ] **MCP resources** — expose concepts as MCP resources (in addition to tools) so agents can read them via the resource subscription protocol, not just on-demand queries
-- [ ] **Scope expressions** — richer `scopes` (line ranges, AST node selectors, regex over file content) instead of only file paths
 - [ ] **Status semantics** — explicit deprecation/supersession flow in CLI (`koncepto deprecate <id> --superseded-by <new-id>`)
+- [ ] **`koncepto check`** — execute the `kind: grep | command` payloads of `invariant.check` and report violations. Prerequisite (structured payload) is already in place.
 
 ## Beyond
 
 Speculative, not on the calendar.
 
+- **Invariant enforcement via LLM** — after `koncepto affected` identifies which invariants a diff touches, use an LLM call to read the invariant description + the changed code and judge whether the invariant still holds. Not a linter (no AST rules), but a semantic reviewer that flags "this change appears to violate the `send-requires-confirmation` invariant because `send_reply` is now reachable without the whitelist check."
 - VS Code extension surfacing concepts in the editor sidebar
 - Cursor / Zed / JetBrains MCP integrations beyond Claude Code
 - Auto-extraction of concept candidates from PR review comments and DEVLOG entries

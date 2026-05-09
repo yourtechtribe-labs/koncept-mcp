@@ -42,27 +42,23 @@ invariants:
       The workspace contains exactly the three packages above. New top-level
       packages require an ADR; do not add `koncept-<x>` opportunistically.
     severity: medium
-    automated_check: false
   - id: no-vertical-slice
     description: |
       Do NOT introduce `src/features/<feature>/` inside any package. The codebase
       is a library, not an app. Files are organized by capability (schema,
       parser, indexer) not by feature.
     severity: high
-    automated_check: false
   - id: no-shared-domain-layer
     description: |
       Do NOT introduce `src/domain/{entities,value-objects,errors}/` shared
       across packages. Cross-package facts are expressed as concepts in this
       registry, not as code abstractions.
     severity: high
-    automated_check: false
   - id: core-has-no-runtime-deps-on-server
     description: |
       `koncept-core` depends on neither `koncept-mcp-server` nor `koncept-cli`.
       The dependency arrows point from server/cli into core, never the reverse.
     severity: high
-    automated_check: false
 
 risks_if_broken:
   - Vertical-slice refactor would invalidate every concept's participant paths and break dogfooding.

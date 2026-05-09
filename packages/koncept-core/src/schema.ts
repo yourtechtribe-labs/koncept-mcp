@@ -55,13 +55,50 @@ export const ParticipantSchema = z.object({
 })
 export type Participant = z.infer<typeof ParticipantSchema>
 
+// AutomatedCheck — discriminated union describing HOW (if at all) the
+// invariant is verified. `kind: none` = manual reviewer (default).
+// `kind: grep` = regex over participant files. `kind: command` = escape hatch
+// running an arbitrary shell command (the runner decides safety policy).
+export const AutomatedCheckSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('none') }),
+  z.object({
+    kind: z.literal('grep'),
+    pattern: z.string().min(1),
+    in: z.array(z.string().min(1)).min(1),
+    should_match: z.boolean().default(true),
+  }),
+  z.object({
+    kind: z.literal('command'),
+    cmd: z.string().min(1),
+  }),
+])
+export type AutomatedCheck = z.infer<typeof AutomatedCheckSchema>
+
 export const InvariantSchema = z.object({
   id: KebabId,
   description: z.string().min(1),
   severity: SeverityEnum,
-  automated_check: z.boolean().default(false),
+  check: AutomatedCheckSchema.default({ kind: 'none' }),
 })
 export type Invariant = z.infer<typeof InvariantSchema>
+
+// ─── Related concepts (typed links) ──────────────────────────────────────────
+
+export const LinkTypeEnum = z.enum([
+  'extends',
+  'refines',
+  'conflicts-with',
+  'superseded-by',
+  'requires',
+  'related',
+])
+export type LinkType = z.infer<typeof LinkTypeEnum>
+
+export const LinkRefSchema = z.union([
+  KebabId,
+  z.object({ id: KebabId, type: LinkTypeEnum.default('related') }),
+])
+export type LinkRef = z.infer<typeof LinkRefSchema>
 
 // ─── Concept (top-level) ─────────────────────────────────────────────────────
 
@@ -77,7 +114,7 @@ export const ConceptSchema = z.object({
   participants: z.array(ParticipantSchema).default([]),
   invariants: z.array(InvariantSchema).default([]),
   risks_if_broken: z.array(z.string().min(1)).default([]),
-  related_concepts: z.array(KebabId).default([]),
+  related_concepts: z.array(LinkRefSchema).default([]),
   tags: z.array(z.string().min(1)).default([]),
 
   // Provenance

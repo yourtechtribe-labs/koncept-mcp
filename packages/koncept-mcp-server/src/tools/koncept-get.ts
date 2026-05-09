@@ -23,7 +23,7 @@ export function registerKonceptGet(mcp: McpServer, ctx: ToolContext): void {
     {
       title: 'Get concept by id',
       description:
-        'Fetch a concept document by its kebab-case id. Returns the full Concept (purpose, participants, invariants, related_concepts).',
+        'Fetch a concept document by its kebab-case id. Returns the full Concept (participants, invariants with structured `check` payload, related_concepts which may be plain id strings or {id, type} objects, tags, references).',
       inputSchema,
       outputSchema,
       annotations: { readOnlyHint: true, idempotentHint: true },

@@ -2,11 +2,11 @@
 
 > MCP stdio server exposing [koncepto](https://github.com/yourtechtribe-labs/koncept-mcp) — semantic concept graph tools for AI coding agents.
 
-**Status**: pre-alpha (`v0.1.0-alpha.1`).
+**Status**: pre-alpha (`v0.2.0-alpha.0`).
 
 ## What it does
 
-Reads a project's `.koncept/concepts/*.yaml` registry and exposes 4 read-only tools over the [Model Context Protocol](https://modelcontextprotocol.io):
+Reads a project's `.koncept/concepts/*.yaml` registry and exposes 5 read-only tools and 2 resource families over the [Model Context Protocol](https://modelcontextprotocol.io):
 
 | Tool | Purpose |
 |---|---|
@@ -14,6 +14,12 @@ Reads a project's `.koncept/concepts/*.yaml` registry and exposes 4 read-only to
 | `koncept_get` | Fetch a concept by id (full payload) |
 | `koncept_for_file` | List concepts where a file appears as participant |
 | `koncept_invariants_at_scope` | Return invariants whose concept overlaps a scope |
+| `koncept_affected` | Given a list of changed file paths, report touched concepts/invariants ordered by max severity |
+
+| Resource | Purpose |
+|---|---|
+| `koncept://concepts` | JSON index of every concept (id, name, type, status, uri) |
+| `koncept://concept/{id}` | Full concept document by id |
 
 Drop this in front of Claude Code, Cursor, or any other MCP client and the agent gains read-Step-0 awareness of cross-cutting semantic facts that don't show up in the AST.
 

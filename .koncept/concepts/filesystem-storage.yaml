@@ -38,19 +38,16 @@ invariants:
       `.koncept/index.json` is regenerable from `.koncept/concepts/*.yaml`. It must
       never be the only place a concept lives; deleting it must never lose data.
     severity: high
-    automated_check: false
   - id: one-concept-per-file
     description: |
       Each YAML file under `.koncept/concepts/` declares exactly one top-level
       concept. No arrays, no aggregating files. Filename SHOULD match the concept id.
     severity: medium
-    automated_check: false
   - id: kebab-yaml-glob
     description: |
       The indexer only picks up files matching `.koncept/concepts/*.yaml`. Files
       under nested subfolders or with `.yml` extension are ignored.
     severity: low
-    automated_check: false
 
 risks_if_broken:
   - Editing `index.json` directly causes silent drift on next `verify` (overwritten).

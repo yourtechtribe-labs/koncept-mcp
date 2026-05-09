@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createServer } from './server.js'
 import { registerAllTools } from './tools/index.js'
+import { registerAllResources } from './resources/index.js'
 
 async function main(): Promise<void> {
   const rawRoot = process.argv[2] ?? process.cwd()
@@ -10,6 +11,7 @@ async function main(): Promise<void> {
 
   const { mcp } = createServer({ rootDir })
   registerAllTools(mcp, { rootDir })
+  registerAllResources(mcp, { rootDir })
 
   const transport = new StdioServerTransport()
   await mcp.connect(transport)

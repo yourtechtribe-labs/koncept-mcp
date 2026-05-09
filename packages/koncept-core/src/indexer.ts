@@ -15,6 +15,7 @@ import { join } from 'node:path'
 import { parseConceptFile, type ParseError } from './parser.js'
 import { resolveRelative, normalizeForward } from './paths.js'
 import type { Concept, IndexEntry } from './schema.js'
+import { resolveRelatedIds } from './affected.js'
 
 export interface DuplicateId {
   id: string
@@ -98,7 +99,7 @@ export async function indexConcepts(rootDir: string): Promise<IndexResult> {
 
   await Promise.all(
     concepts.map(async ({ concept, filePath }) => {
-      for (const relatedId of concept.related_concepts) {
+      for (const relatedId of resolveRelatedIds(concept)) {
         if (!knownIds.has(relatedId)) {
           result.unresolvedRelated.push({
             conceptId: concept.id,

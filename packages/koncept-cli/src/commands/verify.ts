@@ -1,7 +1,10 @@
 import {
   indexConcepts,
   isIndexClean,
+  loadConcepts,
+  suggestLinks,
   writeIndex,
+  type LinkSuggestion,
 } from '@yourtechtribe-labs/koncept-core'
 import type { CommandContext } from '../index.js'
 
@@ -10,12 +13,17 @@ export async function runVerify(ctx: CommandContext): Promise<number> {
   await writeIndex(ctx.rootDir, result.entries)
 
   const quiet = ctx.flags.quiet === true
+  const wantSuggestions = ctx.flags['no-suggestions'] !== true
   if (!quiet) {
     process.stdout.write(`koncepto verify: ${result.entries.length} concept(s) indexed\n`)
   }
 
   if (isIndexClean(result)) {
     if (!quiet) process.stdout.write('koncepto verify: ✓ all checks passed\n')
+    if (wantSuggestions && !quiet) {
+      const loaded = await loadConcepts(ctx.rootDir)
+      printSuggestions(suggestLinks(loaded.concepts))
+    }
     return 0
   }
 
@@ -41,4 +49,22 @@ export async function runVerify(ctx: CommandContext): Promise<number> {
   }
 
   return 1
+}
+
+function printSuggestions(suggestions: LinkSuggestion[]): void {
+  if (suggestions.length === 0) return
+  process.stdout.write(
+    `\nSuggestions (${suggestions.length}, not blocking — pass --no-suggestions to silence):\n`,
+  )
+  for (const s of suggestions) {
+    process.stdout.write(`  ◦ ${s.a} ↔ ${s.b}\n`)
+    if (s.shared_participants.length > 0) {
+      process.stdout.write(
+        `      shared participants: ${s.shared_participants.join(', ')}\n`,
+      )
+    }
+    if (s.shared_tags.length > 0) {
+      process.stdout.write(`      shared tags: ${s.shared_tags.join(', ')}\n`)
+    }
+  }
 }

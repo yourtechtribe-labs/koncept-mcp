@@ -92,6 +92,95 @@ describe('ConceptSchema', () => {
     const result = ConceptSchema.safeParse(incomplete)
     expect(result.success).toBe(false)
   })
+
+  it('defaults invariant.check to {kind: none} when omitted', () => {
+    const result = ConceptSchema.safeParse(VALID)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.invariants[0].check).toEqual({ kind: 'none' })
+    }
+  })
+
+  it('accepts invariant.check kind: grep with required fields', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'grep', pattern: 'foo', in: ['src/x.ts'] },
+        },
+      ],
+    }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const check = result.data.invariants[0].check
+      expect(check.kind).toBe('grep')
+      if (check.kind === 'grep') {
+        expect(check.should_match).toBe(true)
+      }
+    }
+  })
+
+  it('rejects invariant.check kind: grep without pattern', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'grep', in: ['src/x.ts'] },
+        },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  it('accepts invariant.check kind: command', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'command', cmd: 'pnpm test' },
+        },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(true)
+  })
+
+  it('related_concepts accepts plain string ids and {id, type} objects in the same list', () => {
+    const c = {
+      ...VALID,
+      related_concepts: [
+        'sector-resolution',
+        { id: 'old-thing', type: 'superseded-by' },
+        { id: 'sibling' },
+      ],
+    }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const links = result.data.related_concepts
+      expect(typeof links[0]).toBe('string')
+      expect(typeof links[1]).toBe('object')
+      if (typeof links[1] !== 'string') expect(links[1].type).toBe('superseded-by')
+      if (typeof links[2] !== 'string') expect(links[2].type).toBe('related')
+    }
+  })
+
+  it('rejects related_concepts object with invalid type', () => {
+    const c = {
+      ...VALID,
+      related_concepts: [{ id: 'x', type: 'nonsense' }],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
 })
 
 describe('KEBAB_ID_REGEX', () => {
