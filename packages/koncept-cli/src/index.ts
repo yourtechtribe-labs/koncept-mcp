@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from './args.js'
@@ -67,11 +68,28 @@ export async function run(argv: string[], cwd: string = process.cwd()): Promise<
   return handler({ rootDir: resolve(cwd), positional, flags })
 }
 
-const invokedAsScript =
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
+/**
+ * True when this module is the process entrypoint (i.e. run as a CLI).
+ *
+ * `import.meta.url` is realpath-resolved by Node's ESM loader, but
+ * `process.argv[1]` is NOT: package managers expose the bin as a symlink
+ * (npm `node_modules/.bin/koncepto`, pnpm's `.pnpm` store indirection).
+ * Comparing the two raw paths therefore never matches under `pnpm run` /
+ * `npx` / `node_modules/.bin`, so the CLI silently no-ops (exit 0, no
+ * output). Resolve argv[1] through realpath before comparing so symlinked
+ * bin invocations are detected correctly.
+ */
+function invokedAsScript(): boolean {
+  const argv1 = process.argv[1]
+  if (argv1 === undefined) return false
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(argv1)).href
+  } catch {
+    return false
+  }
+}
 
-if (invokedAsScript) {
+if (invokedAsScript()) {
   run(process.argv.slice(2))
     .then((code) => process.exit(code))
     .catch((err: unknown) => {
