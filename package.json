@@ -18,7 +18,7 @@
     "prettier": "3.8.3",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.2",
-    "vitest": "3.2.4"
+    "vitest": "4.1.7"
   },
   "packageManager": "pnpm@11.0.8",
   "engines": {
