@@ -38,7 +38,7 @@
   "dependencies": {
     "@yourtechtribe-labs/koncept-core": "workspace:^0.2.0-alpha.0",
     "glob": "13.0.6",
-    "yaml": "2.8.4"
+    "yaml": "2.9.0"
   },
   "publishConfig": {
     "access": "public",
