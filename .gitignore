@@ -40,5 +40,7 @@ pnpm-debug.log*
 # Claude Code config + project tracking + AI agent docs (private to maintainers)
 .claude/
 tracking/
+specs/
 CLAUDE.md
+.mcp.json
 claude-progress.txt

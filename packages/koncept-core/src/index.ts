@@ -63,3 +63,12 @@ export type {
 // Auto-link inference
 export { suggestLinks } from './suggest-links.js'
 export type { LinkSuggestion, SuggestLinksOptions } from './suggest-links.js'
+
+// Checker (invariant.check executor)
+export { runChecks } from './checker.js'
+export type {
+  CheckOptions,
+  CheckStatus,
+  InvariantCheckResult,
+  CheckResult,
+} from './checker.js'

@@ -8,6 +8,7 @@ import { runVerify } from './commands/verify.js'
 import { runList } from './commands/list.js'
 import { runLink } from './commands/link.js'
 import { runAffected } from './commands/affected.js'
+import { runCheck } from './commands/check.js'
 import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
@@ -22,6 +23,9 @@ Usage:
        --role=<r> --purpose=<p>
   koncepto affected [--from <ref>]    Report concepts/invariants touched by a diff
        [--files=a,b,c] [--json]
+  koncepto check                      Execute invariant.check payloads (grep + command)
+       [--id <concept-id>]                 (filter to one concept)
+       [--json]                            (machine-readable output)
 
 Flags:
   --help, --version
@@ -41,6 +45,7 @@ const COMMANDS: Record<string, Handler> = {
   list: runList,
   link: runLink,
   affected: runAffected,
+  check: runCheck,
 }
 
 export async function run(argv: string[], cwd: string = process.cwd()): Promise<number> {
