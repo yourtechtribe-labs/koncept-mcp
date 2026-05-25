@@ -1,6 +1,6 @@
 {
   "name": "@yourtechtribe-labs/koncept-cli",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0-alpha.2",
   "description": "CLI for koncepto — init, verify, list, link operations on .koncept/ concept graphs.",
   "keywords": [
     "mcp",
