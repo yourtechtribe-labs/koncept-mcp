@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process'
 import {
   computeAffected,
   loadConcepts,
@@ -6,6 +5,7 @@ import {
 } from '@yourtechtribe-labs/koncept-core'
 import type { CommandContext } from '../index.js'
 import { gatherAcks } from './acks.js'
+import { resolveChangedFiles } from './git.js'
 
 export interface AffectedOptions {
   rootDir: string
@@ -18,7 +18,7 @@ export interface AffectedOptions {
 
 export async function runAffected(ctx: CommandContext): Promise<number> {
   const opts = parseOptions(ctx)
-  const filesResult = resolveChangedFiles(opts)
+  const filesResult = resolveChangedFiles(opts.rootDir, opts.from, opts.filesOverride)
   if (!filesResult.ok) {
     process.stderr.write(`koncepto affected: ${filesResult.error}\n`)
     return 2
@@ -77,38 +77,6 @@ function parseOptions(ctx: CommandContext): AffectedOptions {
     requireAck: ctx.flags['require-ack'] === true,
     ackCsv: typeof ctx.flags.ack === 'string' ? ctx.flags.ack : null,
   }
-}
-
-interface FilesResult {
-  ok: boolean
-  files: string[]
-  error: string
-}
-
-function resolveChangedFiles(opts: AffectedOptions): FilesResult {
-  if (opts.filesOverride !== null) {
-    return { ok: true, files: opts.filesOverride, error: '' }
-  }
-  const result = spawnSync(
-    'git',
-    ['diff', '--name-only', '-z', opts.from],
-    { cwd: opts.rootDir, encoding: 'buffer' },
-  )
-  if (result.error) {
-    return { ok: false, files: [], error: `git invocation failed: ${result.error.message}` }
-  }
-  if (result.status !== 0) {
-    const stderr = result.stderr ? result.stderr.toString('utf-8').trim() : ''
-    return {
-      ok: false,
-      files: [],
-      error: `git diff exited with status ${result.status}${stderr ? `: ${stderr}` : ''}`,
-    }
-  }
-  const stdout = result.stdout ? result.stdout.toString('utf-8') : ''
-  // `--name-only -z` NUL-terminates each path (so paths with spaces survive).
-  const files = stdout.split('\0').filter((s) => s.length > 0)
-  return { ok: true, files, error: '' }
 }
 
 function renderReport(report: AffectedReport, requireAck: boolean): void {
