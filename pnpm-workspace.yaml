@@ -1,6 +1,14 @@
 packages:
   - "packages/*"
 
+# Force-patch transitive vulns pulled by @modelcontextprotocol/sdk's HTTP
+# transport (express -> qs; @hono/node-server -> hono). This server uses stdio
+# only, so the HTTP-path CVEs are not reachable here — these are patch-level
+# bumps to clear Dependabot alerts. Remove once the SDK ships patched ranges.
+overrides:
+  hono: ">=4.12.18 <5"
+  qs: ">=6.15.2 <7"
+
 # Security: only allow build scripts from explicitly trusted packages.
 # Default-deny (post npm Sept-2025 supply-chain attack).
 # pnpm 11 renamed `onlyBuiltDependencies` -> `allowBuilds`. Map: pkg -> bool.
