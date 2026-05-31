@@ -9,6 +9,7 @@ import { runList } from './commands/list.js'
 import { runLink } from './commands/link.js'
 import { runAffected } from './commands/affected.js'
 import { runCheck } from './commands/check.js'
+import { runReview } from './commands/review.js'
 import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
@@ -28,6 +29,10 @@ Usage:
   koncepto check                      Execute invariant.check payloads (grep + command)
        [--id <concept-id>]                 (filter to one concept)
        [--json]                            (machine-readable output)
+  koncepto review [--from <ref>]      LLM review of touched advisory invariants
+       [--files=a,b,c] [--json]            (requires ANTHROPIC_API_KEY)
+       [--severity high|medium|low]        (min severity to review; default medium)
+       [--strict] [--model <id>]           (--strict: exit 1 on any 'violated')
 
 Flags:
   --help, --version
@@ -48,6 +53,7 @@ const COMMANDS: Record<string, Handler> = {
   link: runLink,
   affected: runAffected,
   check: runCheck,
+  review: runReview,
 }
 
 export async function run(argv: string[], cwd: string = process.cwd()): Promise<number> {

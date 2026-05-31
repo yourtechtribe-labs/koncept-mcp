@@ -79,3 +79,12 @@ export type {
   InvariantCheckResult,
   CheckResult,
 } from './checker.js'
+
+// Review (LLM semantic reviewer — pure; llm + diff injected by the CLI)
+export { parseVerdict, reviewAffected, buildPrompt } from './review.js'
+export type {
+  Verdict,
+  InvariantReview,
+  ReviewResult,
+  ReviewOptions,
+} from './review.js'
