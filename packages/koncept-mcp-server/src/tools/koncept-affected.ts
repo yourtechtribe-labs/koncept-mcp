@@ -39,11 +39,19 @@ const outputSchema = {
           description: z.string(),
           severity: SeverityEnum,
           check: AutomatedCheckSchema,
+          klass: z.enum(['automated', 'advisory']),
+          acknowledged: z.boolean().optional(),
         }),
       ),
     }),
   ),
   unmatched_files: z.array(z.string()),
+  summary: z.object({
+    automated: z.number(),
+    advisory: z.number(),
+    advisory_high: z.number(),
+    unacknowledged_high: z.number(),
+  }),
 }
 
 export function registerKonceptAffected(mcp: McpServer, ctx: ToolContext): void {
@@ -64,6 +72,7 @@ export function registerKonceptAffected(mcp: McpServer, ctx: ToolContext): void 
         changed_files: report.changed_files,
         concepts: report.concepts,
         unmatched_files: report.unmatched_files,
+        summary: report.summary,
       }
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],

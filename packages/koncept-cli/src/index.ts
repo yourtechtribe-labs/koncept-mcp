@@ -9,6 +9,7 @@ import { runList } from './commands/list.js'
 import { runLink } from './commands/link.js'
 import { runAffected } from './commands/affected.js'
 import { runCheck } from './commands/check.js'
+import { runReview } from './commands/review.js'
 import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
@@ -23,9 +24,15 @@ Usage:
        --role=<r> --purpose=<p>
   koncepto affected [--from <ref>]    Report concepts/invariants touched by a diff
        [--files=a,b,c] [--json]
+       [--require-ack]                     (exit 3 if an advisory high invariant is unacked)
+       [--ack=c:i,c2:i2]                   (acknowledge invariants; supplements commit trailers)
   koncepto check                      Execute invariant.check payloads (grep + command)
        [--id <concept-id>]                 (filter to one concept)
        [--json]                            (machine-readable output)
+  koncepto review [--from <ref>]      LLM review of touched advisory invariants
+       [--files=a,b,c] [--json]            (requires ANTHROPIC_API_KEY)
+       [--severity high|medium|low]        (min severity to review; default medium)
+       [--strict] [--model <id>]           (--strict: exit 1 on any 'violated')
 
 Flags:
   --help, --version
@@ -46,6 +53,7 @@ const COMMANDS: Record<string, Handler> = {
   link: runLink,
   affected: runAffected,
   check: runCheck,
+  review: runReview,
 }
 
 export async function run(argv: string[], cwd: string = process.cwd()): Promise<number> {

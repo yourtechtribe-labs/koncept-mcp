@@ -47,6 +47,13 @@ describe('koncept-mcp-server stdio tools', () => {
     await cleanup()
   })
 
+  it('does NOT expose a review tool (D-002: LLM/network is CLI-only)', async () => {
+    const { tools } = (await client.listTools()) as { tools: Array<{ name: string }> }
+    const names = tools.map((t) => t.name)
+    expect(names).not.toContain('koncept_review')
+    expect(names.some((n) => n.includes('review'))).toBe(false)
+  })
+
   it('koncept_get returns the auth-flow concept', async () => {
     const out = (await call(client, 'koncept_get', { id: 'auth-flow' })) as {
       concept?: { id: string; invariants: unknown[] }
@@ -129,6 +136,20 @@ describe('koncept-mcp-server stdio tools', () => {
     expect(out.concepts.map((c) => c.id)).toEqual(['auth-flow'])
     expect(out.concepts[0].max_severity).toBe('high')
     expect(out.unmatched_files).toEqual([])
+  })
+
+  it('koncept_affected tags each invariant with klass and emits a summary (read-only, no acks)', async () => {
+    const out = (await call(client, 'koncept_affected', {
+      files: ['src/auth/provider.ts'],
+    })) as {
+      concepts: Array<{ invariants: Array<{ klass: string; acknowledged?: boolean }> }>
+      summary: { automated: number; advisory: number; advisory_high: number; unacknowledged_high: number }
+    }
+    expect(out.concepts[0].invariants[0].klass).toMatch(/^(advisory|automated)$/)
+    // ack-mode is off for the MCP tool (it never passes acks) — no acknowledgment surfaced
+    expect(out.concepts[0].invariants[0].acknowledged).toBeUndefined()
+    expect(out.summary.unacknowledged_high).toBe(0)
+    expect(typeof out.summary.advisory).toBe('number')
   })
 
   it('koncept_affected lists unmatched files separately', async () => {
