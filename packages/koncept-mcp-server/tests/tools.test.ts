@@ -47,6 +47,13 @@ describe('koncept-mcp-server stdio tools', () => {
     await cleanup()
   })
 
+  it('does NOT expose a review tool (D-002: LLM/network is CLI-only)', async () => {
+    const { tools } = (await client.listTools()) as { tools: Array<{ name: string }> }
+    const names = tools.map((t) => t.name)
+    expect(names).not.toContain('koncept_review')
+    expect(names.some((n) => n.includes('review'))).toBe(false)
+  })
+
   it('koncept_get returns the auth-flow concept', async () => {
     const out = (await call(client, 'koncept_get', { id: 'auth-flow' })) as {
       concept?: { id: string; invariants: unknown[] }
