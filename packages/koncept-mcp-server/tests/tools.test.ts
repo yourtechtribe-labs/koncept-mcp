@@ -131,6 +131,20 @@ describe('koncept-mcp-server stdio tools', () => {
     expect(out.unmatched_files).toEqual([])
   })
 
+  it('koncept_affected tags each invariant with klass and emits a summary (read-only, no acks)', async () => {
+    const out = (await call(client, 'koncept_affected', {
+      files: ['src/auth/provider.ts'],
+    })) as {
+      concepts: Array<{ invariants: Array<{ klass: string; acknowledged?: boolean }> }>
+      summary: { automated: number; advisory: number; advisory_high: number; unacknowledged_high: number }
+    }
+    expect(out.concepts[0].invariants[0].klass).toMatch(/^(advisory|automated)$/)
+    // ack-mode is off for the MCP tool (it never passes acks) — no acknowledgment surfaced
+    expect(out.concepts[0].invariants[0].acknowledged).toBeUndefined()
+    expect(out.summary.unacknowledged_high).toBe(0)
+    expect(typeof out.summary.advisory).toBe('number')
+  })
+
   it('koncept_affected lists unmatched files separately', async () => {
     const out = (await call(client, 'koncept_affected', {
       files: ['src/auth/provider.ts', 'README.md'],

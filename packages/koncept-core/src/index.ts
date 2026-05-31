@@ -51,14 +51,21 @@ export { searchEntries } from './search.js'
 export type { SearchHit, MatchField } from './search.js'
 
 // Affected (impact analysis)
-export { computeAffected, loadConcepts, resolveRelatedIds } from './affected.js'
+export { computeAffected, resolveRelatedIds } from './affected.js'
 export type {
   AffectedReport,
   AffectedConcept,
   AffectedInvariant,
   MatchedRole,
-  LoadConceptsResult,
 } from './affected.js'
+
+// Classification & sign-off (klass, summary, acks)
+export { classifyCheck, ackKey } from './classify.js'
+export type { InvariantClass, AffectedSummary } from './classify.js'
+
+// Concept loader (fs bridge for the pure graph functions)
+export { loadConcepts } from './load-concepts.js'
+export type { LoadConceptsResult } from './load-concepts.js'
 
 // Auto-link inference
 export { suggestLinks } from './suggest-links.js'

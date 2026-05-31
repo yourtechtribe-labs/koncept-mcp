@@ -23,6 +23,8 @@ Usage:
        --role=<r> --purpose=<p>
   koncepto affected [--from <ref>]    Report concepts/invariants touched by a diff
        [--files=a,b,c] [--json]
+       [--require-ack]                     (exit 3 if an advisory high invariant is unacked)
+       [--ack=c:i,c2:i2]                   (acknowledge invariants; supplements commit trailers)
   koncepto check                      Execute invariant.check payloads (grep + command)
        [--id <concept-id>]                 (filter to one concept)
        [--json]                            (machine-readable output)

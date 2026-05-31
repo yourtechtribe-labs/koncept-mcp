@@ -128,3 +128,148 @@ describe('computeAffected', () => {
     expect(r.unmatched_files).toEqual(['unrelated/file.md'])
   })
 })
+
+describe('computeAffected — invariant classification (klass)', () => {
+  it('classifies check.kind none as advisory', () => {
+    const c = concept({
+      id: 'a',
+      source_of_truth: { file: 'src/a.ts' },
+      invariants: [{ id: 'i', description: 'd', severity: 'high', check: { kind: 'none' } }],
+    })
+    const r = computeAffected([c], ['src/a.ts'])
+    expect(r.concepts[0].invariants[0].klass).toBe('advisory')
+  })
+
+  it('classifies check.kind grep as automated', () => {
+    const c = concept({
+      id: 'a',
+      source_of_truth: { file: 'src/a.ts' },
+      invariants: [
+        {
+          id: 'i',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'grep', pattern: 'x', in: ['src/a.ts'], should_match: true },
+        },
+      ],
+    })
+    const r = computeAffected([c], ['src/a.ts'])
+    expect(r.concepts[0].invariants[0].klass).toBe('automated')
+  })
+
+  it('classifies check.kind command as automated', () => {
+    const c = concept({
+      id: 'a',
+      source_of_truth: { file: 'src/a.ts' },
+      invariants: [
+        { id: 'i', description: 'd', severity: 'high', check: { kind: 'command', cmd: 'true' } },
+      ],
+    })
+    const r = computeAffected([c], ['src/a.ts'])
+    expect(r.concepts[0].invariants[0].klass).toBe('automated')
+  })
+})
+
+describe('computeAffected — summary + acknowledgment', () => {
+  const mixed = concept({
+    id: 'a',
+    source_of_truth: { file: 'src/a.ts' },
+    invariants: [
+      { id: 'advis-high', description: 'd', severity: 'high', check: { kind: 'none' } },
+      { id: 'advis-low', description: 'd', severity: 'low', check: { kind: 'none' } },
+      {
+        id: 'auto',
+        description: 'd',
+        severity: 'high',
+        check: { kind: 'grep', pattern: 'x', in: ['src/a.ts'], should_match: true },
+      },
+    ],
+  })
+
+  it('counts automated, advisory and advisory_high across concepts', () => {
+    const r = computeAffected([mixed], ['src/a.ts'])
+    expect(r.summary).toEqual({
+      automated: 1,
+      advisory: 2,
+      advisory_high: 1,
+      unacknowledged_high: 0,
+    })
+  })
+
+  it('ack-mode OFF (no acks): unacknowledged_high is 0 and acknowledged is absent', () => {
+    const r = computeAffected([mixed], ['src/a.ts'])
+    expect(r.summary.unacknowledged_high).toBe(0)
+    for (const inv of r.concepts[0].invariants) {
+      expect(inv.acknowledged).toBeUndefined()
+    }
+  })
+
+  it('ack-mode ON, unacked advisory_high → unacknowledged_high counted', () => {
+    const r = computeAffected([mixed], ['src/a.ts'], new Set())
+    const high = r.concepts[0].invariants.find((i) => i.invariant_id === 'advis-high')!
+    expect(high.acknowledged).toBe(false)
+    expect(r.summary.unacknowledged_high).toBe(1)
+  })
+
+  it('ack-mode ON, advisory_high acked → unacknowledged_high is 0', () => {
+    const r = computeAffected([mixed], ['src/a.ts'], new Set(['a:advis-high']))
+    const high = r.concepts[0].invariants.find((i) => i.invariant_id === 'advis-high')!
+    expect(high.acknowledged).toBe(true)
+    expect(r.summary.unacknowledged_high).toBe(0)
+  })
+
+  it('automated highs never require an ack (excluded from unacknowledged_high)', () => {
+    const autoOnly = concept({
+      id: 'a',
+      source_of_truth: { file: 'src/a.ts' },
+      invariants: [
+        {
+          id: 'auto',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'command', cmd: 'true' },
+        },
+      ],
+    })
+    const r = computeAffected([autoOnly], ['src/a.ts'], new Set())
+    expect(r.summary.advisory_high).toBe(0)
+    expect(r.summary.unacknowledged_high).toBe(0)
+  })
+
+  // Canonical motivating incident: one changed file participates in TWO
+  // concepts; the second concept's advisory_high invariant must be acked.
+  it('canonical incident: one file in two concepts, second advisory_high gates', () => {
+    const indexBacked = concept({
+      id: 'accounting-aggregate-index-backed',
+      source_of_truth: { file: 'backend/unified_calculator.py' },
+      invariants: [
+        { id: 'new-readers-rely-on-index', description: 'd', severity: 'high', check: { kind: 'none' } },
+      ],
+    })
+    const metricRegistry = concept({
+      id: 'metric-registry-single-source-of-truth',
+      source_of_truth: { file: 'backend/registry.py' },
+      participants: [
+        { file: 'backend/unified_calculator.py', role: 'reader', purpose: 'reads metrics' },
+      ],
+      invariants: [
+        { id: 'no-duplicate-metric-calculations', description: 'd', severity: 'high', check: { kind: 'none' } },
+      ],
+    })
+    const changed = ['backend/unified_calculator.py']
+
+    const unacked = computeAffected([indexBacked, metricRegistry], changed, new Set())
+    expect(unacked.concepts.map((c) => c.id).sort()).toEqual([
+      'accounting-aggregate-index-backed',
+      'metric-registry-single-source-of-truth',
+    ])
+    expect(unacked.summary.advisory_high).toBe(2)
+    expect(unacked.summary.unacknowledged_high).toBe(2)
+
+    const acked = computeAffected([indexBacked, metricRegistry], changed, new Set([
+      'accounting-aggregate-index-backed:new-readers-rely-on-index',
+      'metric-registry-single-source-of-truth:no-duplicate-metric-calculations',
+    ]))
+    expect(acked.summary.unacknowledged_high).toBe(0)
+  })
+})

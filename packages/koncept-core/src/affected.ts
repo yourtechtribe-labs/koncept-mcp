@@ -8,8 +8,13 @@
  * normalization — no glob, no prefix.
  */
 
-import { glob } from 'glob'
-import { parseConceptFile } from './parser.js'
+import {
+  annotateAcks,
+  classifyCheck,
+  computeSummary,
+  type AffectedSummary,
+  type InvariantClass,
+} from './classify.js'
 import { normalizeForward } from './paths.js'
 import type {
   AutomatedCheck,
@@ -28,6 +33,9 @@ export interface AffectedInvariant {
   description: string
   severity: Severity
   check: AutomatedCheck
+  klass: InvariantClass
+  /** Only populated in ack-mode (acks passed to computeAffected); advisory only. */
+  acknowledged?: boolean
 }
 
 export interface AffectedConcept {
@@ -44,6 +52,7 @@ export interface AffectedReport {
   changed_files: string[]
   concepts: AffectedConcept[]
   unmatched_files: string[]
+  summary: AffectedSummary
 }
 
 const SEVERITY_RANK: Record<Severity, number> = { high: 3, medium: 2, low: 1 }
@@ -63,10 +72,15 @@ export function resolveRelatedIds(concept: Concept): string[] {
 
 /**
  * Pure computation: which concepts are touched by `changedFiles`?
+ *
+ * `acks` (optional) turns on ack-mode: when provided (even empty), each
+ * advisory invariant gets an `acknowledged` flag and the summary reports
+ * `unacknowledged_high`. Omitted → ack-mode off (MCP enumeration path).
  */
 export function computeAffected(
   concepts: Concept[],
   changedFiles: string[],
+  acks?: ReadonlySet<string>,
 ): AffectedReport {
   const normalizedChanged = changedFiles.map(normalizeKey)
   const fileToConcepts = buildFileIndex(concepts)
@@ -78,14 +92,18 @@ export function computeAffected(
   for (const affected of matched.values()) {
     const concept = concepts.find((c) => c.id === affected.id)!
     affected.other_participants = computeOtherParticipants(concept, affected)
+    if (acks !== undefined) annotateAcks(affected, acks)
   }
   const unmatched = changedFiles.filter((_, i) => !matchedKeys.has(normalizedChanged[i]))
+  const concepts_ = [...matched.values()].sort(byMaxSeverityThenId)
   return {
     changed_files: changedFiles.map(normalizeForward),
-    concepts: [...matched.values()].sort(byMaxSeverityThenId),
+    concepts: concepts_,
     unmatched_files: unmatched.map(normalizeForward),
+    summary: computeSummary(concepts_, acks !== undefined),
   }
 }
+
 
 function buildFileIndex(
   concepts: Concept[],
@@ -150,6 +168,7 @@ function makeAffected(concept: Concept): AffectedConcept {
     description: inv.description,
     severity: inv.severity,
     check: inv.check,
+    klass: classifyCheck(inv.check),
   }))
   invariants.sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity])
   const maxSev = invariants.length > 0 ? invariants[0].severity : null
@@ -169,39 +188,4 @@ function byMaxSeverityThenId(a: AffectedConcept, b: AffectedConcept): number {
   const bv = b.max_severity ? SEVERITY_RANK[b.max_severity] : 0
   if (av !== bv) return bv - av
   return a.id.localeCompare(b.id)
-}
-
-/**
- * Convenience loader: parse every YAML under `.koncept/concepts/` and return
- * the valid Concept[] plus any parse errors. CLI/MCP server uses this when
- * they don't already have a parsed list (otherwise call `computeAffected`
- * directly with the concepts they hold).
- */
-export interface LoadConceptsResult {
-  concepts: Concept[]
-  parseErrors: Array<{ filePath: string; message: string; field?: string }>
-}
-
-const CONCEPTS_GLOB = '.koncept/concepts/*.yaml'
-
-export async function loadConcepts(rootDir: string): Promise<LoadConceptsResult> {
-  const files = await glob(CONCEPTS_GLOB, {
-    cwd: rootDir,
-    absolute: true,
-    nodir: true,
-    posix: true,
-  })
-  const parsed = await Promise.all(files.map((f) => parseConceptFile(f)))
-  const concepts: Concept[] = []
-  const parseErrors: LoadConceptsResult['parseErrors'] = []
-  for (const r of parsed) {
-    if (r.concept !== null) {
-      concepts.push(r.concept)
-    } else {
-      for (const e of r.errors) {
-        parseErrors.push({ filePath: r.filePath, message: e.message, field: e.field })
-      }
-    }
-  }
-  return { concepts, parseErrors }
 }
