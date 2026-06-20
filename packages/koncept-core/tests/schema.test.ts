@@ -154,6 +154,115 @@ describe('ConceptSchema', () => {
     expect(ConceptSchema.safeParse(c).success).toBe(true)
   })
 
+  // ─── #36: static enforcement kinds ─────────────────────────────────────────
+
+  it('accepts invariant.check kind: implication with if/then', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'implication', if: 'BankingCacheService', then: 'CacheInvalidationService' },
+        },
+      ],
+    }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const check = result.data.invariants[0].check
+      expect(check.kind).toBe('implication')
+      if (check.kind === 'implication') {
+        expect(check.if).toBe('BankingCacheService')
+        expect(check.then).toBe('CacheInvalidationService')
+      }
+    }
+  })
+
+  it('accepts kind: implication with an over.role selector', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'implication', over: { role: 'writer' }, if: 'a', then: 'b' },
+        },
+      ],
+    }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const check = result.data.invariants[0].check
+      if (check.kind === 'implication') {
+        expect(check.over).toEqual({ role: 'writer' })
+      }
+    }
+  })
+
+  it('rejects kind: implication without then', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        { id: 'xx', description: 'd', severity: 'high', check: { kind: 'implication', if: 'a' } },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  it('rejects an over selector with an unknown role', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        {
+          id: 'xx',
+          description: 'd',
+          severity: 'high',
+          check: { kind: 'symbol_present', over: { role: 'architect' }, pattern: 'x' },
+        },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  it('accepts kind: symbol_present and kind: forbidden with a pattern', () => {
+    for (const kind of ['symbol_present', 'forbidden'] as const) {
+      const c = {
+        ...VALID,
+        invariants: [
+          { id: 'xx', description: 'd', severity: 'high', check: { kind, pattern: 'Foo' } },
+        ],
+      }
+      const result = ConceptSchema.safeParse(c)
+      expect(result.success, kind).toBe(true)
+      if (result.success) {
+        expect(result.data.invariants[0].check.kind).toBe(kind)
+      }
+    }
+  })
+
+  it('rejects kind: symbol_present without pattern', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        { id: 'xx', description: 'd', severity: 'high', check: { kind: 'symbol_present' } },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  it('rejects an unknown check kind', () => {
+    const c = {
+      ...VALID,
+      invariants: [
+        { id: 'xx', description: 'd', severity: 'high', check: { kind: 'telepathy', pattern: 'x' } },
+      ],
+    }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
   it('related_concepts accepts plain string ids and {id, type} objects in the same list', () => {
     const c = {
       ...VALID,

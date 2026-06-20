@@ -40,6 +40,31 @@ claude mcp add --scope user koncepto -- \
   npx -y @yourtechtribe-labs/koncept-mcp-server@alpha "$PWD"
 ```
 
+## Enforced invariants
+
+An invariant is **advisory** by default — surfaced to agents via `koncept_for_file`,
+but never evaluated. Give it a `check` and it becomes an **enforced gate** that
+`koncepto verify` fails on:
+
+```yaml
+invariants:
+  - id: invalidate-projection-cache
+    description: A standalone sync that invalidates the banking cache must also
+      invalidate the projection cache, or the /cashflow opening balance goes stale.
+    severity: high
+    check:
+      kind: implication        # per participant file: if it matches `if`, it must also match `then`
+      over: { role: writer }
+      if: "BankingCacheService"
+      then: "CacheInvalidationService|on_full_sync"
+```
+
+Static kinds (`implication`, `symbol_present`, `forbidden`, `grep`) run on
+`koncepto verify` by default (fast, read-only; `--no-checks` to skip). The shell
+escape hatch (`kind: command`) runs only on `koncepto check`. This turns a
+"completion-contract" concept into both the checklist **and** its enforcement gate —
+the loose end can't be skipped under momentum.
+
 ## Architecture
 
 3 packages under pnpm workspace:

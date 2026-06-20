@@ -62,6 +62,18 @@ describe('koncept-mcp-server stdio tools', () => {
     expect(out.concept?.invariants.length).toBe(2)
   })
 
+  it('koncept_get exposes invariant.check so agents see enforced vs advisory (#36)', async () => {
+    const out = (await call(client, 'koncept_get', { id: 'auth-flow' })) as {
+      concept?: { invariants: Array<{ id: string; check?: { kind: string; pattern?: string } }> }
+    }
+    const enforced = out.concept?.invariants.find((i) => i.id === 'tokens-not-in-localstorage')
+    expect(enforced?.check?.kind).toBe('forbidden')
+    expect(enforced?.check?.pattern).toBe('localStorage')
+    // advisory invariant defaults to kind: none
+    const advisory = out.concept?.invariants.find((i) => i.id === 'refresh-cookie-httponly')
+    expect(advisory?.check?.kind).toBe('none')
+  })
+
   it('koncept_get returns not_found for missing id', async () => {
     const out = (await call(client, 'koncept_get', { id: 'does-not-exist' })) as {
       error?: string

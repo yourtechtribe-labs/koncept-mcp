@@ -32,7 +32,7 @@ Each \`concepts/<id>.yaml\` MUST validate against this shape:
 | \`description\`      | string                          | yes      | Why this concept exists; what changing it would break.                    |
 | \`source_of_truth\`  | { file, symbol? }               | yes      | The single file (and optionally symbol) that defines the concept.         |
 | \`participants\`     | [{ file, role, purpose }]       | no       | Files that participate. \`role\` ∈ \`writer\` \\| \`reader\` \\| \`tester\` \\| \`docs\`. |
-| \`invariants\`       | [{ id, description, severity, automated_check }] | no | Properties that MUST hold. \`severity\` ∈ \`high\` \\| \`medium\` \\| \`low\`.    |
+| \`invariants\`       | [{ id, description, severity, check? }] | no | Properties that MUST hold. \`severity\` ∈ \`high\` \\| \`medium\` \\| \`low\`. \`check\` makes it enforced (see below). |
 | \`risks_if_broken\`  | [string]                        | no       | What goes wrong when an invariant is violated.                            |
 | \`related_concepts\` | [kebab-id]                      | no       | Cross-references to other concept ids in this registry.                   |
 | \`tags\`             | [string]                        | no       | Free-form tags for search/filter.                                         |
@@ -43,6 +43,26 @@ Each \`concepts/<id>.yaml\` MUST validate against this shape:
 
 See \`EXAMPLE.yaml\` (sibling of this README) for a fully-populated reference.
 Full Zod schema: \`@yourtechtribe-labs/koncept-core\` → \`ConceptSchema\`.
+
+## Invariant \`check\` — advisory vs enforced
+
+An invariant with no \`check\` (or \`kind: none\`) is **advisory**: surfaced to agents via
+\`koncept_for_file\`, but never evaluated. Add a \`check\` to make it an **enforced gate**.
+
+\`koncepto verify\` runs the **static** kinds by default (\`--no-checks\` to skip);
+\`kind: command\` is run only by \`koncepto check\` (never by \`verify\`).
+
+| \`kind\`            | Runs over | Passes when | Run by |
+|-------------------|-----------|-------------|--------|
+| \`none\`            | —         | always (advisory) | — |
+| \`implication\`     | participants (per file) | every file matching \`if\` also matches \`then\` | verify + check |
+| \`symbol_present\`  | participants (per file) | every selected file matches \`pattern\` | verify + check |
+| \`forbidden\`       | participants (per file) | no selected file matches \`pattern\` | verify + check |
+| \`grep\`            | explicit \`in: [files]\` | pattern (not) found per \`should_match\` | verify + check |
+| \`command\`         | shell | command exits 0 | **check only** |
+
+\`over: { role: writer }\` narrows the static kinds to participants of that role
+(default: all participants). \`if\`/\`then\`/\`pattern\` are JavaScript \`RegExp\` sources.
 
 ## Workflow
 
@@ -84,7 +104,14 @@ invariants:
   - id: example-invariant
     description: A property that MUST hold across the participants above.
     severity: high             # high | medium | low
-    automated_check: false     # true if a test/CI rule already enforces this
+    # No 'check' (or kind: none) → advisory: surfaced to agents, never evaluated.
+    # Add a 'check' to make it an enforced gate that 'koncepto verify' runs.
+    # Example — the "no loose ends" implication (per file: if it matches 'if', it must match 'then'):
+    # check:
+    #   kind: implication        # implication | symbol_present | forbidden | grep | command | none
+    #   over: { role: writer }   # optional: narrow to a participant role (default: all)
+    #   if: "BankingCacheService"
+    #   then: "CacheInvalidationService"
 
 risks_if_broken:
   - What goes wrong if a future change silently violates the invariant.

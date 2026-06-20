@@ -168,6 +168,25 @@ describe('computeAffected — invariant classification (klass)', () => {
     const r = computeAffected([c], ['src/a.ts'])
     expect(r.concepts[0].invariants[0].klass).toBe('automated')
   })
+
+  // #36 static enforcement kinds must classify as automated (klass is `!== none`,
+  // NOT an allowlist) — else --require-ack would treat an enforced gate as advisory.
+  it('classifies the #36 static kinds (implication/symbol_present/forbidden) as automated', () => {
+    const checks = [
+      { kind: 'implication', if: 'a', then: 'b' },
+      { kind: 'symbol_present', pattern: 'x' },
+      { kind: 'forbidden', pattern: 'y' },
+    ] as const
+    for (const check of checks) {
+      const c = concept({
+        id: 'a',
+        source_of_truth: { file: 'src/a.ts' },
+        invariants: [{ id: 'i', description: 'd', severity: 'high', check }],
+      })
+      const r = computeAffected([c], ['src/a.ts'])
+      expect(r.concepts[0].invariants[0].klass, check.kind).toBe('automated')
+    }
+  })
 })
 
 describe('computeAffected — summary + acknowledgment', () => {

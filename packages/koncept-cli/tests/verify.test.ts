@@ -164,4 +164,102 @@ last_updated: 2026-05-03
       spy.mockRestore()
     }
   })
+
+  // ─── #36: verify enforces static invariant checks by default ─────────────────
+
+  const FORBIDDEN_VIOLATION = `id: no-debug
+name: No debug
+type: behavioral-invariant
+description: x.
+source_of_truth: { file: src.ts }
+participants:
+  - file: src.ts
+    role: writer
+    purpose: code
+invariants:
+  - id: no-console-log
+    description: Production code must not contain console.log statements.
+    severity: high
+    check:
+      kind: forbidden
+      pattern: "console.log"
+created: 2026-06-21
+last_updated: 2026-06-21
+`
+
+  it('exits 1 when a static check is violated, printing file + description', async () => {
+    await writeFile(join(tmp, 'src.ts'), 'console.log("debug")\n', 'utf-8')
+    await writeConcept('no-debug.yaml', FORBIDDEN_VIOLATION)
+
+    let stderr = ''
+    const spy = vi.spyOn(process.stderr, 'write').mockImplementation((c) => {
+      stderr += typeof c === 'string' ? c : c.toString()
+      return true
+    })
+    try {
+      const code = await runVerify({ rootDir: tmp, positional: [], flags: {} })
+      expect(code).toBe(1)
+      expect(stderr).toContain('no-console-log')
+      expect(stderr).toContain('src.ts')
+      expect(stderr).toContain('console.log statements')
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('--no-checks skips check evaluation (exit 0 despite a violation)', async () => {
+    await writeFile(join(tmp, 'src.ts'), 'console.log("debug")\n', 'utf-8')
+    await writeConcept('no-debug.yaml', FORBIDDEN_VIOLATION)
+
+    const code = await runVerify({
+      rootDir: tmp,
+      positional: [],
+      flags: { 'no-checks': true, 'no-suggestions': true },
+    })
+    expect(code).toBe(0)
+  })
+
+  it('never executes kind: command (skipped by the static gate) → exit 0', async () => {
+    await writeFile(join(tmp, 'src.ts'), '// fixture\n', 'utf-8')
+    await writeConcept(
+      'cmd.yaml',
+      `id: cmd-concept
+name: Cmd
+type: behavioral-invariant
+description: x.
+source_of_truth: { file: src.ts }
+participants:
+  - file: src.ts
+    role: writer
+    purpose: code
+invariants:
+  - id: would-fail-if-run
+    description: This command would exit 1 if executed.
+    severity: high
+    check:
+      kind: command
+      cmd: "node -e \\"process.exit(1)\\""
+created: 2026-06-21
+last_updated: 2026-06-21
+`,
+    )
+    const code = await runVerify({
+      rootDir: tmp,
+      positional: [],
+      flags: { 'no-suggestions': true },
+    })
+    expect(code).toBe(0)
+  })
+
+  it('exits 0 when a static check passes', async () => {
+    await writeFile(join(tmp, 'src.ts'), 'const clean = 1\n', 'utf-8')
+    await writeConcept('no-debug.yaml', FORBIDDEN_VIOLATION)
+
+    const code = await runVerify({
+      rootDir: tmp,
+      positional: [],
+      flags: { 'no-suggestions': true },
+    })
+    expect(code).toBe(0)
+  })
 })
