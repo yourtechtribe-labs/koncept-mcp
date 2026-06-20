@@ -13,8 +13,12 @@ import type { AutomatedCheck } from './schema.js'
 
 /**
  * Derived from `check.kind`: `none` invariants need human/LLM judgment
- * (advisory); `grep`/`command` are machine-verified by `koncepto check`
- * (automated). A pure projection of existing data — no schema field.
+ * (advisory); every other kind is machine-verified (automated) — grep/command via
+ * `koncepto check`, and the static kinds (implication/symbol_present/forbidden, #36)
+ * also via `koncepto verify`. A pure projection of existing data — no schema field.
+ *
+ * NOTE: the rule is `kind !== 'none'`, deliberately NOT an allowlist — a new
+ * enforcement kind is automatically `automated` without touching this file.
  */
 export type InvariantClass = 'automated' | 'advisory'
 

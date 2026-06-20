@@ -55,10 +55,30 @@ export const ParticipantSchema = z.object({
 })
 export type Participant = z.infer<typeof ParticipantSchema>
 
+// ParticipantSelector — selects WHICH of a concept's declared participants a
+// static check runs over (#36). v1: an optional `role` filter over the already-
+// declared participant list. Absent selector → all participants. NO filesystem
+// glob in v1 — that would need a glob dep (CONTRIBUTING "no new runtime deps")
+// and an fs walk, breaking the cheap/hook-safe property that lets verify run it.
+export const ParticipantSelectorSchema = z.object({
+  role: RoleEnum.optional(),
+})
+export type ParticipantSelector = z.infer<typeof ParticipantSelectorSchema>
+
 // AutomatedCheck — discriminated union describing HOW (if at all) the
 // invariant is verified. `kind: none` = manual reviewer (default).
-// `kind: grep` = regex over participant files. `kind: command` = escape hatch
+// `kind: grep` = regex over an explicit file list. `kind: command` = escape hatch
 // running an arbitrary shell command (the runner decides safety policy).
+//
+// #36 static enforcement kinds run over the concept's PARTICIPANTS (per-file),
+// are fast/read-only/deterministic, and are evaluated by `koncepto verify` by
+// default (unlike `command`, which stays exclusive to `koncepto check`):
+// - `implication`     — per file: if it matches `if`, it must also match `then`.
+// - `symbol_present`  — every selected file must match `pattern`.
+// - `forbidden`       — no selected file may match `pattern`.
+// `symbol_present`/`forbidden` are exact sugar for per-file presence/absence
+// using the same RegExp engine as `grep`; they differ only in source set
+// (participants, not an explicit `in[]`) and aggregation (per-file, not any-file).
 export const AutomatedCheckSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('none') }),
   z.object({
@@ -70,6 +90,22 @@ export const AutomatedCheckSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('command'),
     cmd: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('implication'),
+    over: ParticipantSelectorSchema.optional(),
+    if: z.string().min(1),
+    then: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('symbol_present'),
+    over: ParticipantSelectorSchema.optional(),
+    pattern: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('forbidden'),
+    over: ParticipantSelectorSchema.optional(),
+    pattern: z.string().min(1),
   }),
 ])
 export type AutomatedCheck = z.infer<typeof AutomatedCheckSchema>

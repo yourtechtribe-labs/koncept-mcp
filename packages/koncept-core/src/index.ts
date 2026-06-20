@@ -14,6 +14,7 @@ export {
   SeverityEnum,
   StatusEnum,
   AutomatedCheckSchema,
+  ParticipantSelectorSchema,
   LinkTypeEnum,
   LinkRefSchema,
 } from './schema.js'
@@ -28,6 +29,7 @@ export type {
   Severity,
   Status,
   AutomatedCheck,
+  ParticipantSelector,
   LinkType,
   LinkRef,
 } from './schema.js'

@@ -1,0 +1,27 @@
+id: treasury-data-sync-completeness
+name: Treasury data sync completeness
+type: behavioral-invariant
+description: >
+  A treasury data sync has companion obligations spread across layers. A standalone
+  sync path must invalidate BOTH the banking cache and the projection cache, or the
+  /cashflow opening balance goes stale while /treasury shows the right number.
+source_of_truth:
+  file: backend/app/services/sync/ebury/service.py
+participants:
+  - file: backend/app/services/sync/ebury/service.py
+    role: writer
+    purpose: Standalone Ebury treasury sync
+invariants:
+  - id: invalidate-projection-cache
+    description: >
+      A standalone sync that invalidates the banking cache must also invalidate the
+      projection cache, or the /cashflow opening balance goes stale.
+    severity: high
+    check:
+      kind: implication
+      over:
+        role: writer
+      if: "BankingCacheService"
+      then: "CacheInvalidationService|on_full_sync"
+created: "2026-06-21"
+last_updated: "2026-06-21"

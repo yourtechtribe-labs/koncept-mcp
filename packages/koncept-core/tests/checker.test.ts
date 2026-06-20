@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { runChecks } from '../src/checker.js'
 
@@ -228,6 +228,210 @@ last_updated: "2026-01-01"
     expect(result.errors).toBe(1)
     expect(result.results[0].status).toBe('error')
     expect(result.results[0].detail).toContain('concept not found')
+  })
+})
+
+// ─── #36 static enforcement kinds ──────────────────────────────────────────────
+
+/** Repo with explicit participants + on-disk files. participants: [path, role][] */
+function makeRepoWith(
+  checkBlock: string,
+  participants: [string, string][],
+  files: Record<string, string>,
+): string {
+  const root = mkdtempSync(join(tmpdir(), 'koncept-checker-'))
+  const conceptsDir = join(root, '.koncept', 'concepts')
+  mkdirSync(conceptsDir, { recursive: true })
+  const partYaml = participants
+    .map(([f, r]) => `  - file: ${f}\n    role: ${r}\n    purpose: p`)
+    .join('\n')
+  const yaml = `
+id: test-concept
+name: Test Concept
+type: behavioral-invariant
+description: desc
+source_of_truth:
+  file: ${participants[0]?.[0] ?? 'src/x.ts'}
+participants:
+${partYaml}
+invariants:
+  - id: test-inv
+    description: test invariant
+    severity: high
+    check:
+${checkBlock}
+created: "2026-01-01"
+last_updated: "2026-01-01"
+`.trim()
+  writeFileSync(join(conceptsDir, 'test-concept.yaml'), yaml)
+  for (const [rel, content] of Object.entries(files)) {
+    const abs = join(root, rel)
+    mkdirSync(join(abs, '..'), { recursive: true })
+    writeFileSync(abs, content)
+  }
+  return root
+}
+
+describe('kind: implication (per-file)', () => {
+  const CHECK = `      kind: implication\n      if: "BankingCacheService"\n      then: "CacheInvalidationService"`
+
+  it('file matches `if` but not `then` → fail with file in detail', async () => {
+    tmpRoot = makeRepoWith(CHECK, [['src/svc.py', 'writer']], {
+      'src/svc.py': 'uses BankingCacheService only',
+    })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.failed).toBe(1)
+    expect(result.results[0].kind).toBe('implication')
+    expect(result.results[0].detail).toContain('src/svc.py')
+  })
+
+  it('file does not match `if` → not an offender (pass)', async () => {
+    tmpRoot = makeRepoWith(CHECK, [['src/svc.py', 'writer']], {
+      'src/svc.py': 'unrelated content',
+    })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.passed).toBe(1)
+  })
+
+  it('file matches both `if` and `then` → pass', async () => {
+    tmpRoot = makeRepoWith(CHECK, [['src/svc.py', 'writer']], {
+      'src/svc.py': 'BankingCacheService + CacheInvalidationService',
+    })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.passed).toBe(1)
+  })
+
+  it('lists every offender across files', async () => {
+    tmpRoot = makeRepoWith(
+      CHECK,
+      [
+        ['src/a.py', 'writer'],
+        ['src/b.py', 'writer'],
+      ],
+      {
+        'src/a.py': 'BankingCacheService alone',
+        'src/b.py': 'BankingCacheService alone too',
+      },
+    )
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.failed).toBe(1)
+    expect(result.results[0].detail).toContain('src/a.py')
+    expect(result.results[0].detail).toContain('src/b.py')
+  })
+})
+
+describe('kind: symbol_present (per-file AND)', () => {
+  const CHECK = `      kind: symbol_present\n      pattern: "Foo"`
+
+  it('every selected file has the pattern → pass', async () => {
+    tmpRoot = makeRepoWith(
+      CHECK,
+      [
+        ['src/a.ts', 'writer'],
+        ['src/b.ts', 'writer'],
+      ],
+      { 'src/a.ts': 'class Foo {}', 'src/b.ts': 'extends Foo' },
+    )
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.passed).toBe(1)
+  })
+
+  it('one file lacks the pattern → fail (per-file AND, not any)', async () => {
+    tmpRoot = makeRepoWith(
+      CHECK,
+      [
+        ['src/a.ts', 'writer'],
+        ['src/b.ts', 'writer'],
+      ],
+      { 'src/a.ts': 'class Foo {}', 'src/b.ts': 'no symbol here' },
+    )
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.failed).toBe(1)
+    expect(result.results[0].detail).toContain('src/b.ts')
+  })
+})
+
+describe('kind: forbidden', () => {
+  const CHECK = `      kind: forbidden\n      pattern: "console.log"`
+
+  it('no file contains the pattern → pass', async () => {
+    tmpRoot = makeRepoWith(CHECK, [['src/a.ts', 'writer']], { 'src/a.ts': 'clean()' })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.passed).toBe(1)
+  })
+
+  it('a file contains the pattern → fail', async () => {
+    tmpRoot = makeRepoWith(CHECK, [['src/a.ts', 'writer']], { 'src/a.ts': 'console.log(1)' })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.failed).toBe(1)
+    expect(result.results[0].detail).toContain('src/a.ts')
+  })
+})
+
+describe('over selector', () => {
+  it('over.role filters participants — violation in a non-selected role is ignored', async () => {
+    const CHECK = `      kind: forbidden\n      over:\n        role: writer\n      pattern: "BAD"`
+    tmpRoot = makeRepoWith(
+      CHECK,
+      [
+        ['src/w.ts', 'writer'],
+        ['src/r.ts', 'reader'],
+      ],
+      { 'src/w.ts': 'clean', 'src/r.ts': 'BAD lives here but is a reader' },
+    )
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.passed).toBe(1)
+  })
+
+  it('over.role matching nothing → error (empty selection)', async () => {
+    const CHECK = `      kind: symbol_present\n      over:\n        role: tester\n      pattern: "x"`
+    tmpRoot = makeRepoWith(CHECK, [['src/w.ts', 'writer']], { 'src/w.ts': 'x' })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.errors).toBe(1)
+    expect(result.results[0].detail).toContain('no participants match')
+  })
+
+  it('missing participant file → error', async () => {
+    const CHECK = `      kind: symbol_present\n      pattern: "x"`
+    tmpRoot = makeRepoWith(CHECK, [['src/gone.ts', 'writer']], {})
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.errors).toBe(1)
+    expect(result.results[0].detail).toContain('file not found')
+  })
+
+  it('invalid regex → error', async () => {
+    const CHECK = `      kind: symbol_present\n      pattern: "[invalid"`
+    tmpRoot = makeRepoWith(CHECK, [['src/a.ts', 'writer']], { 'src/a.ts': 'x' })
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.errors).toBe(1)
+    expect(result.results[0].detail).toContain('invalid regex')
+  })
+})
+
+describe('staticOnly mode', () => {
+  it('skips kind: command instead of executing it', async () => {
+    tmpRoot = makeRepo(
+      BASE_YAML(`      kind: command\n      cmd: "node -e \\"process.exit(1)\\""`),
+    )
+    const result = await runChecks({ cwd: tmpRoot, staticOnly: true })
+    expect(result.skipped).toBe(1)
+    expect(result.failed).toBe(0)
+    expect(result.results[0].status).toBe('skip')
+  })
+
+  it('still evaluates static kinds under staticOnly', async () => {
+    const CHECK = `      kind: forbidden\n      pattern: "BAD"`
+    tmpRoot = makeRepoWith(CHECK, [['src/a.ts', 'writer']], { 'src/a.ts': 'BAD' })
+    const result = await runChecks({ cwd: tmpRoot, staticOnly: true })
+    expect(result.failed).toBe(1)
+  })
+})
+
+describe('result.description', () => {
+  it('populates the invariant description on each result (remediation hint)', async () => {
+    tmpRoot = makeRepo(BASE_YAML('      kind: none'))
+    const result = await runChecks({ cwd: tmpRoot })
+    expect(result.results[0].description).toBe('test invariant')
   })
 })
 

@@ -16,8 +16,10 @@ const HELP = `koncepto ${VERSION}
 
 Usage:
   koncepto init                       Bootstrap .koncept/ in cwd
-  koncepto verify                     Validate concepts and write index.json
+  koncepto verify                     Validate concepts, run static invariant checks,
+                                      and write index.json
        [--no-suggestions]                  (suppress auto-link suggestions)
+       [--no-checks]                       (skip static invariant checks; structural only)
   koncepto list [--type] [--tag]      List concepts (with optional filters)
        [--status]
   koncepto link <id> <file>           Add a participant to an existing concept
