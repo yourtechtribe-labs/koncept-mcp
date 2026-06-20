@@ -42,5 +42,6 @@ pnpm-debug.log*
 tracking/
 specs/
 CLAUDE.md
+RELEASE_RUNBOOK.md
 .mcp.json
 claude-progress.txt
