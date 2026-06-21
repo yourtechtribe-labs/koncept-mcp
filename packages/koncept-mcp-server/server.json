@@ -6,12 +6,12 @@
     "url": "https://github.com/yourtechtribe-labs/koncept-mcp",
     "source": "github"
   },
-  "version": "0.2.0-alpha.4",
+  "version": "0.2.0-alpha.5",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@yourtechtribe-labs/koncept-mcp-server",
-      "version": "0.2.0-alpha.4",
+      "version": "0.2.0-alpha.5",
       "transport": {
         "type": "stdio"
       }

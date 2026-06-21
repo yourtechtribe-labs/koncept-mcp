@@ -1,6 +1,6 @@
 {
   "name": "@yourtechtribe-labs/koncept-core",
-  "version": "0.2.0-alpha.4",
+  "version": "0.2.0-alpha.5",
   "description": "Core schema, parser, and indexer for koncepto semantic concept graphs.",
   "keywords": [
     "yaml",
