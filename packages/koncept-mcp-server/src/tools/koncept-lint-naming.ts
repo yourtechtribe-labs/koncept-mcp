@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
   collectNamingCandidates,
   loadConcepts,
+  resolveWithinRoot,
   type ScannedFile,
 } from '@yourtechtribe-labs/koncept-core'
 import type { ToolContext } from './index.js'
@@ -45,6 +45,7 @@ const outputSchema = {
   ),
   rules_applied: z.number(),
   unreadable_files: z.array(z.string()),
+  rejected_paths: z.array(z.string()),
   note: z.string(),
 }
 
@@ -74,9 +75,17 @@ export function registerKonceptLintNaming(mcp: McpServer, ctx: ToolContext): voi
 
       const scanned: ScannedFile[] = []
       const unreadable: string[] = []
+      const rejected: string[] = []
       for (const file of files) {
+        // Bound reads to the project root — a `../..` segment would otherwise
+        // escape it. Rejected paths are reported, never read (#44).
+        const abs = resolveWithinRoot(ctx.rootDir, file)
+        if (abs === null) {
+          rejected.push(file)
+          continue
+        }
         try {
-          const content = readFileSync(join(ctx.rootDir, file), 'utf-8')
+          const content = readFileSync(abs, 'utf-8')
           const lines = content.split('\n').map((text, i) => ({ n: i + 1, text }))
           scanned.push({ file, lines })
         } catch {
@@ -99,6 +108,7 @@ export function registerKonceptLintNaming(mcp: McpServer, ctx: ToolContext): voi
         })),
         rules_applied: rulesApplied,
         unreadable_files: unreadable,
+        rejected_paths: rejected,
         note: AGENT_NOTE,
       }
       return {
