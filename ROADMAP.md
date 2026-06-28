@@ -38,6 +38,8 @@ Direction, not commitment. Subject to dogfood and user feedback.
 - [ ] **Concept discovery in CI** — GitHub Action that runs `koncepto verify` on every PR and comments on broken cross-refs
 - [ ] **Status semantics** — explicit deprecation/supersession flow in CLI (`koncepto deprecate <id> --superseded-by <new-id>`)
 - [ ] **`koncepto check`** — execute the `kind: grep | command` payloads of `invariant.check` and report violations. Prerequisite (structured payload) is already in place.
+- [~] **`glossary_terms` (K3)** — additive concept field linking a concept to the vocabulary terms it governs (closes the noun↔verb loop). Implemented on branch `feature/glossary-terms-lint-naming`; ships in alpha.6.
+- [~] **`koncepto lint-naming` (K4)** — flag NEW uses of a concept's forbidden naming aliases in a diff (DR-1). Advisory, AI-first: deterministic regex pre-filter → LLM-judge over the grey zone. Two surfaces — MCP read-only tool (host agent judges, no key) + CLI (Anthropic API, `--strict` gates). Concepts opt in via a `naming: {canonical, forbidden}` block. Implemented on branch; ships in alpha.6. See D-007.
 
 ## Beyond
 

@@ -10,6 +10,7 @@ import { runLink } from './commands/link.js'
 import { runAffected } from './commands/affected.js'
 import { runCheck } from './commands/check.js'
 import { runReview } from './commands/review.js'
+import { runLintNaming } from './commands/lint-naming.js'
 import { VERSION } from './version.js'
 
 const HELP = `koncepto ${VERSION}
@@ -35,6 +36,10 @@ Usage:
        [--files=a,b,c] [--json]            (requires ANTHROPIC_API_KEY)
        [--severity high|medium|low]        (min severity to review; default medium)
        [--strict] [--model <id>]           (--strict: exit 1 on any 'violated')
+  koncepto lint-naming [--from <ref>] Flag NEW uses of a concept's forbidden
+       [--files=a,b,c] [--json]            naming aliases in a diff (DR-1).
+       [--strict] [--model <id>]           Pre-filter + LLM-judge (ANTHROPIC_API_KEY);
+                                           advisory, --strict exits 1 on a violation.
 
 Flags:
   --help, --version
@@ -56,6 +61,7 @@ const COMMANDS: Record<string, Handler> = {
   affected: runAffected,
   check: runCheck,
   review: runReview,
+  'lint-naming': runLintNaming,
 }
 
 export async function run(argv: string[], cwd: string = process.cwd()): Promise<number> {

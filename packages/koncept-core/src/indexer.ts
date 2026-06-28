@@ -130,6 +130,7 @@ export async function indexConcepts(rootDir: string): Promise<IndexResult> {
         status: concept.status,
         participants_paths: concept.participants.map((p) => normalizeForward(p.file)),
         tags: concept.tags,
+        glossary_terms: concept.glossary_terms,
         file: normalizeForward(filePath),
       })
     }),

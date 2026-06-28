@@ -290,6 +290,58 @@ describe('ConceptSchema', () => {
     }
     expect(ConceptSchema.safeParse(c).success).toBe(false)
   })
+
+  // ─── K3: glossary_terms ──────────────────────────────────────────────────────
+
+  it('defaults glossary_terms to [] when omitted (non-breaking for pre-K3 concepts)', () => {
+    const result = ConceptSchema.safeParse(VALID)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.glossary_terms).toEqual([])
+  })
+
+  it('accepts glossary_terms as free strings (not restricted to kebab)', () => {
+    const c = { ...VALID, glossary_terms: ['vencimiento', 'factura-wr', 'contraparte'] }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.glossary_terms).toEqual(['vencimiento', 'factura-wr', 'contraparte'])
+  })
+
+  it('rejects an empty string inside glossary_terms', () => {
+    const c = { ...VALID, glossary_terms: ['ok', ''] }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  // ─── K4: naming block ────────────────────────────────────────────────────────
+
+  it('naming is optional (absent → undefined, concept still valid)', () => {
+    const result = ConceptSchema.safeParse(VALID)
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.naming).toBeUndefined()
+  })
+
+  it('accepts a naming block with canonical + forbidden[]', () => {
+    const c = {
+      ...VALID,
+      type: 'naming-convention',
+      naming: { canonical: 'next_maturity', forbidden: ['maturity_date', 'expiration_date'] },
+    }
+    const result = ConceptSchema.safeParse(c)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.naming?.canonical).toBe('next_maturity')
+      expect(result.data.naming?.forbidden).toEqual(['maturity_date', 'expiration_date'])
+    }
+  })
+
+  it('rejects a naming block with an empty forbidden[] (must have ≥1 alias)', () => {
+    const c = { ...VALID, naming: { canonical: 'x', forbidden: [] } }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
+
+  it('rejects a naming block missing canonical', () => {
+    const c = { ...VALID, naming: { forbidden: ['x'] } }
+    expect(ConceptSchema.safeParse(c).success).toBe(false)
+  })
 })
 
 describe('KEBAB_ID_REGEX', () => {
