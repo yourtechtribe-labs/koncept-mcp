@@ -55,6 +55,18 @@ export const ParticipantSchema = z.object({
 })
 export type Participant = z.infer<typeof ParticipantSchema>
 
+// NamingSchema (K4) — declares the canonical name of a domain concept and the
+// forbidden aliases for it. Only meaningful on `type: naming-convention`
+// concepts; `koncepto lint-naming` reads `forbidden` as the prohibited-alias
+// patterns to scan a diff for, and surfaces `canonical` as the remediation
+// ("use `next_maturity`, not `maturity_date`"). Additive/optional — a concept
+// without it is unchanged.
+export const NamingSchema = z.object({
+  canonical: z.string().min(1),
+  forbidden: z.array(z.string().min(1)).min(1),
+})
+export type Naming = z.infer<typeof NamingSchema>
+
 // ParticipantSelector — selects WHICH of a concept's declared participants a
 // static check runs over (#36). v1: an optional `role` filter over the already-
 // declared participant list. Absent selector → all participants. NO filesystem
@@ -153,6 +165,16 @@ export const ConceptSchema = z.object({
   related_concepts: z.array(LinkRefSchema).default([]),
   tags: z.array(z.string().min(1)).default([]),
 
+  // K3 — glossary term(s) this concept governs (closes the vocabulary↔invariant
+  // loop). Free strings (like tags), NOT KebabId: they map to anchors in an
+  // external data-dictionary whose convention koncepto does not own. Additive,
+  // non-breaking (default []), same as related_concepts/tags.
+  glossary_terms: z.array(z.string().min(1)).default([]),
+
+  // K4 — naming-convention enforcement payload (canonical + forbidden aliases).
+  // Optional; only read for `type: naming-convention` concepts by lint-naming.
+  naming: NamingSchema.optional(),
+
   // Provenance
   created: z.string().min(1),
   last_updated: z.string().min(1),
@@ -170,6 +192,9 @@ export const IndexEntrySchema = z.object({
   status: StatusEnum,
   participants_paths: z.array(z.string().min(1)),
   tags: z.array(z.string().min(1)),
+  // K3 — denormalized so MCP search/for-file surface glossary terms without
+  // reading the full YAML. Default [] keeps pre-K3 indexes valid.
+  glossary_terms: z.array(z.string().min(1)).default([]),
   file: z.string().min(1),
 })
 export type IndexEntry = z.infer<typeof IndexEntrySchema>

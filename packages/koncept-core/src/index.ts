@@ -15,6 +15,7 @@ export {
   StatusEnum,
   AutomatedCheckSchema,
   ParticipantSelectorSchema,
+  NamingSchema,
   LinkTypeEnum,
   LinkRefSchema,
 } from './schema.js'
@@ -24,6 +25,7 @@ export type {
   Participant,
   Invariant,
   SourceOfTruth,
+  Naming,
   Role,
   ConceptType,
   Severity,
@@ -90,3 +92,20 @@ export type {
   ReviewResult,
   ReviewOptions,
 } from './review.js'
+
+// lint-naming (K4 — DR-1 enforcement; deterministic pre-filter + injected judge)
+export {
+  collectNamingCandidates,
+  judgeCandidates,
+  buildNamingPrompt,
+  parseNamingVerdict,
+  parseAddedLines,
+} from './lint-naming.js'
+export type {
+  ScannedLine,
+  ScannedFile,
+  LintCandidate,
+  LintCandidatesResult,
+  LintFinding,
+  NamingVerdict,
+} from './lint-naming.js'
