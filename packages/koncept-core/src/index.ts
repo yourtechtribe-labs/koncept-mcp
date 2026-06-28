@@ -93,6 +93,9 @@ export type {
   ReviewOptions,
 } from './review.js'
 
+// Paths (cross-platform helpers; resolveWithinRoot guards caller-supplied paths)
+export { normalizeForward, resolveWithinRoot } from './paths.js'
+
 // lint-naming (K4 — DR-1 enforcement; deterministic pre-filter + injected judge)
 export {
   collectNamingCandidates,

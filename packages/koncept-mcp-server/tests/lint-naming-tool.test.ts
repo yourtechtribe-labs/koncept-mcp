@@ -102,8 +102,23 @@ last_updated: 2026-06-28
   it('reports unreadable files instead of throwing', async () => {
     const out = (await call(client, 'koncept_lint_naming', {
       files: ['does-not-exist.py'],
-    })) as { candidates: unknown[]; unreadable_files: string[] }
+    })) as { candidates: unknown[]; unreadable_files: string[]; rejected_paths: string[] }
     expect(out.candidates).toEqual([])
     expect(out.unreadable_files).toEqual(['does-not-exist.py'])
+    expect(out.rejected_paths).toEqual([])
+  })
+
+  it('rejects a path that escapes the project root (#44) without reading it', async () => {
+    const out = (await call(client, 'koncept_lint_naming', {
+      files: ['../../../../../../etc/passwd', 'loan.py'],
+    })) as {
+      candidates: Array<{ file: string }>
+      rejected_paths: string[]
+      unreadable_files: string[]
+    }
+    expect(out.rejected_paths).toEqual(['../../../../../../etc/passwd'])
+    // the in-root file is still scanned normally
+    expect(out.candidates.every((c) => c.file === 'loan.py')).toBe(true)
+    expect(out.candidates.length).toBeGreaterThan(0)
   })
 })

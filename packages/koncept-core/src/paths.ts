@@ -6,7 +6,7 @@
  * everywhere we read/write paths so equality + globs are consistent.
  */
 
-import { resolve, basename as nodeBasename, isAbsolute } from 'node:path'
+import { resolve, basename as nodeBasename, isAbsolute, sep } from 'node:path'
 
 /**
  * Convert all backslashes to forward slashes and strip the Windows
@@ -29,6 +29,21 @@ export function normalizeForward(p: string): string {
 export function resolveRelative(rootDir: string, relative: string): string {
   const absolute = isAbsolute(relative) ? relative : resolve(rootDir, relative)
   return normalizeForward(absolute)
+}
+
+/**
+ * Resolve `relative` against `rootDir` and return the absolute path ONLY if it
+ * stays within `rootDir`. Returns `null` for path-traversal escapes (`../`) or
+ * absolute paths pointing outside the root.
+ *
+ * Guard for tools that read CALLER-supplied paths (e.g. the lint-naming MCP
+ * tool): a `../..` segment in `readFileSync(join(rootDir, file))` would escape
+ * the project. `resolve` collapses `..` first, then we check containment.
+ */
+export function resolveWithinRoot(rootDir: string, relative: string): string | null {
+  const root = resolve(rootDir)
+  const abs = resolve(root, relative)
+  return abs === root || abs.startsWith(root + sep) ? abs : null
 }
 
 /**

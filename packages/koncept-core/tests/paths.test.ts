@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeForward, resolveRelative, basename } from '../src/paths.js'
+import { resolve } from 'node:path'
+import { normalizeForward, resolveRelative, basename, resolveWithinRoot } from '../src/paths.js'
 
 describe('normalizeForward', () => {
   it('converts backslashes to forward slashes', () => {
@@ -34,6 +35,39 @@ describe('resolveRelative', () => {
     const abs = '/abs/path/file.ts'
     const result = resolveRelative('/tmp/koncept', abs)
     expect(result).toBe(abs)
+  })
+})
+
+describe('resolveWithinRoot', () => {
+  const root = resolve('/tmp/project-root')
+
+  it('returns the resolved absolute path for an in-root relative path', () => {
+    expect(resolveWithinRoot(root, 'src/loan.py')).toBe(resolve(root, 'src/loan.py'))
+  })
+
+  it('allows `..` segments that stay within the root', () => {
+    expect(resolveWithinRoot(root, 'src/../loan.py')).toBe(resolve(root, 'loan.py'))
+  })
+
+  it('returns the root itself for "."', () => {
+    expect(resolveWithinRoot(root, '.')).toBe(root)
+  })
+
+  it('rejects a `../` traversal that escapes the root', () => {
+    expect(resolveWithinRoot(root, '../../etc/passwd')).toBeNull()
+  })
+
+  it('rejects a sibling escape (../sibling)', () => {
+    expect(resolveWithinRoot(root, '../sibling/file.ts')).toBeNull()
+  })
+
+  it('rejects an absolute path pointing outside the root', () => {
+    expect(resolveWithinRoot(root, resolve('/tmp/elsewhere/x.ts'))).toBeNull()
+  })
+
+  it('does not treat a sibling sharing a name prefix as inside (root-foo vs root)', () => {
+    // `${root}-foo` startsWith `${root}` textually, but is NOT under `${root}/`
+    expect(resolveWithinRoot(root, '../project-root-foo/x.ts')).toBeNull()
   })
 })
 
